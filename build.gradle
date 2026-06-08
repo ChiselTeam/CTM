@@ -1,0 +1,173 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.134'
+    id 'net.darkhax.curseforgegradle' version '1.2.30'
+    id 'com.modrinth.minotaur' version '2.+'
+}
+
+var env = new Properties()
+if (file('.env').exists()) {
+    file('.env').withInputStream { env.load(it) }
+}
+
+version = mod_version
+group = mod_group_id
+
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+
+    exclude("**/*.bbmodel")
+    exclude("src/generated/**/.cache")
+}
+
+repositories {
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven { url "https://api.modrinth.com/maven" }
+}
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+neoForge {
+    version = project.neo_version
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            clientData()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+
+}
+
+tasks.register('publishCurseForge', TaskPublishCurseForge) {
+    apiToken = env.getProperty("CURSEFORGE")
+    def projectId = '1568397'
+    def mainFile = upload(projectId, jar)
+
+    mainFile.changelog = file('CHANGELOG.md')
+    mainFile.addModLoader("neoforge")
+    mainFile.releaseType = release_type
+}
+
+modrinth {
+    token = env.getProperty("MODRINTH")
+    projectId = "ctmlib"
+    versionName = "${mod_name}-${mod_version}"
+    versionNumber = mod_version
+    versionType = release_type
+    uploadFile = jar
+    gameVersions = ["26.1.2"]
+    loaders = ["neoforge"]
+}
+
+tasks.register('releaseCurseForge') {
+    group = 'upload'
+    description = 'Builds and uploads the jar to CurseForge'
+    dependsOn 'publishCurseForge'
+}
+
+tasks.register('releaseModrinth') {
+    group = 'upload'
+    description = 'Builds and uploads the jar to Modrinth'
+    dependsOn 'modrinth'
+}
+
+tasks.register('release') {
+    group = 'upload'
+    description = 'Builds and uploads the jar to both CurseForge and Modrinth'
+    dependsOn 'jar', 'releaseCurseForge', 'releaseModrinth'
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+java {
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "localGitHubMavenRepo"
+            url = layout.buildDirectory.dir("mvn-repo")
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
