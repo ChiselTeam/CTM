@@ -167,41 +167,4 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
 
         return new DirectionalCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, horizontalQuads, verticalQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant);
     }
-
-    private Vector3f[] getOffsets(Direction face, Vector3f from, Vector3f to) {
-        float offset = 0.01f;
-        Vector3f[] offsets = new Vector3f[] {
-                new Vector3f(from), new Vector3f(to)
-        };
-
-        if (variant.waterOffset()) {
-            switch (face) {
-                case DOWN -> {
-                    offsets[0].y -= offset;
-                    offsets[1].y -= offset;
-                }
-                case UP -> {
-                    offsets[0].y += offset;
-                    offsets[1].y += offset;
-                }
-                case NORTH -> {
-                    offsets[0].z -= offset;
-                    offsets[1].z -= offset;
-                }
-                case SOUTH -> {
-                    offsets[0].z += offset;
-                    offsets[1].z += offset;
-                }
-                case WEST -> {
-                    offsets[0].x -= offset;
-                    offsets[1].x -= offset;
-                }
-                case EAST -> {
-                    offsets[0].x += offset;
-                    offsets[1].x += offset;
-                }
-            }
-        }
-        return offsets;
-    }
 }

@@ -78,8 +78,6 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
             List<BakedQuad> baseQuadList = new ArrayList<>();
             BakedQuad[][] connQuads = new BakedQuad[4][CTMLogic.values().length];
 
-            Vector3f[] offsets = getOffsets(face, from, to);
-
             for (int c = 0; c < 4; c++) {
                 Vec3i corner = face.getUnitVec3i().offset(planeDirections[c].getUnitVec3i()).offset(planeDirections[(c + 1) % 4].getUnitVec3i()).offset(1, 1, 1).multiply(8);
 
@@ -108,7 +106,7 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
                         if (connFace.cullForDirection() == null) {
                             unculledFaces.add(face);
                         }
-                        connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1],
+                        connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, qFrom, qTo,
                                 connFace, logic.chooseMaterial(sprites), face, state, null, true, emissivity);
                     }
                 }
@@ -121,41 +119,5 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         }
 
         return new StandardCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant);
-    }
-    private Vector3f[] getOffsets(Direction face, Vector3f from, Vector3f to) {
-        float offset = 0.01f;
-        Vector3f[] offsets = new Vector3f[] {
-                new Vector3f(from), new Vector3f(to)
-        };
-
-        if (variant.waterOffset()) {
-            switch (face) {
-                case DOWN -> {
-                    offsets[0].y -= offset;
-                    offsets[1].y -= offset;
-                }
-                case UP -> {
-                    offsets[0].y += offset;
-                    offsets[1].y += offset;
-                }
-                case NORTH -> {
-                    offsets[0].z -= offset;
-                    offsets[1].z -= offset;
-                }
-                case SOUTH -> {
-                    offsets[0].z += offset;
-                    offsets[1].z += offset;
-                }
-                case WEST -> {
-                    offsets[0].x -= offset;
-                    offsets[1].x -= offset;
-                }
-                case EAST -> {
-                    offsets[0].x += offset;
-                    offsets[1].x += offset;
-                }
-            }
-        }
-        return offsets;
     }
 }
