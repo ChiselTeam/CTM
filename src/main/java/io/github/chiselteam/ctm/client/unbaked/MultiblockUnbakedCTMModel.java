@@ -120,11 +120,12 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
 
         BakedQuad[] quads = new BakedQuad[values.length];
         for (int i = 0; i < values.length; i++) {
-            CuboidFace.UVs remapped;
-            if (values[i] instanceof CTMLogic2x2 logic) remapped = logic.remapUVs(uvs);
-            else if (values[i] instanceof CTMLogic3x3 logic) remapped = logic.remapUVs(uvs);
-            else if (values[i] instanceof CTMLogic4x4 logic) remapped = logic.remapUVs(uvs);
-            else remapped = uvs;
+            CuboidFace.UVs remapped = switch (values[i]) {
+                case CTMLogic2x2 logic -> logic.remapUVs(uvs);
+                case CTMLogic3x3 logic -> logic.remapUVs(uvs);
+                case CTMLogic4x4 logic -> logic.remapUVs(uvs);
+                case null, default -> uvs;
+            };
 
             CuboidFace faceDef = new CuboidFace(cull, tintIndex, "", remapped, Quadrant.R0);
             if (faceDef.cullForDirection() == null) unculled.add(face);
