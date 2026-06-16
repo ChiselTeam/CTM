@@ -100,7 +100,7 @@ modrinth {
     versionNumber = mod_version
     versionType = release_type
     uploadFile = jar
-    gameVersions = ["26.1.2"]
+    gameVersions = ["${minecraft_version}"] as Iterable<? extends String>
     loaders = ["neoforge"]
 }
 
