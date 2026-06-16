@@ -47,7 +47,7 @@ public record CTMOffsetSyncPacket(ChunkPos chunkPos, BlockPos offset) implements
                 int minSection = level.getMinSectionY();
                 int maxSection = level.getMaxSectionY();
                 for (int sy = minSection; sy <= maxSection; sy++) {
-                    mc.levelRenderer.setSectionDirty(cx, sy, cz);
+                    mc.levelExtractor.setSectionDirty(cx, sy, cz);
                 }
             }
         });
