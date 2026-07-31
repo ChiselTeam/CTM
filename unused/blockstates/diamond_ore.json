@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "ctm:block/diamond_ore"
+    }
+  }
+}

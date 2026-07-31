@@ -1,0 +1,11 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "ctm:block/light_gray_stained_glass",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:light_gray_stained_glass",
+    "kind": "standard"
+  }
+}

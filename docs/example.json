@@ -1,0 +1,53 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "example:block/portal_frame",
+  "element": {
+    "min": [0.0, 0.0, 0.0],
+    "max": [16.0, 16.0, 16.0]
+  },
+  "connected_faces": ["all"],
+  "render_overlay_on_all_faces": false,
+  "variant": {
+    "block": "example:portal_frame",
+    "kind": "edges",
+    "water_offset": false
+  },
+  "base_tint_index": -1,
+  "base_emissivity": 0,
+  "tint_index": -1,
+  "emissivity": 0,
+  "eldritch": false,
+  "texture_slots": {
+    "base_texture": "example:block/portal_frame",
+    "overlay_texture": "example:block/portal_edges_unconnected",
+    "overlay_connected": "example:block/portal_edges_connected",
+    "overlay_obscured": "example:block/portal_edges_obscured",
+    "particle": "example:block/portal_frame",
+    "overlay_moss": "example:block/moss_overlay"
+  },
+  "connects_to": [
+    {
+      "id": "example:portal_frame"
+    },
+    {
+      "id": "minecraft:nether_portal"
+    }
+  ],
+  "overlays": [
+    {
+      "material": "overlay_moss",
+      "faces": ["north", "south", "east", "west"],
+      "conditions": {
+        "neighbors": [
+          {
+            "direction": "any",
+            "id": "minecraft:moss_block"
+          }
+        ]
+      },
+      "priority": 10,
+      "tint_index": -1,
+      "emissivity": 0
+    }
+  ]
+}

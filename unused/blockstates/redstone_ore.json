@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "ctm:block/redstone_ore"
+    },
+    "lit=true": {
+      "model": "ctm:block/redstone_ore"
+    }
+  }
+}

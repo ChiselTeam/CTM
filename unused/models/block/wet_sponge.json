@@ -1,0 +1,7 @@
+{
+  "textures": {
+    "overlay_texture": "minecraft:block/wet_sponge",
+    "overlay_connected": "minecraft:block/sponge_wet-ctm",
+    "particle": "minecraft:block/wet_sponge"
+  }
+}

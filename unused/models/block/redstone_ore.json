@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/util_cube_glow_2_all",
+  "textures": {
+    "all": "minecraft:block/stone",
+    "base_texture": "minecraft:block/stone",
+    "glow": "minecraft:block/redstone_ore_glow",
+    "particle": "minecraft:block/stone"
+  }
+}

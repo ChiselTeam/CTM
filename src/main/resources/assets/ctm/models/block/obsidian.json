@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "minecraft:block/obsidian",
+    "overlay": "minecraft:block/obsidian_reflect",
+    "overlay_connected": "minecraft:block/obsidian_reflect-ctm",
+    "particle": "minecraft:block/obsidian"
+  }
+}

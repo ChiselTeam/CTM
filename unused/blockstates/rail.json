@@ -1,0 +1,41 @@
+{
+  "variants": {
+    "shape=north_south": {
+      "model": "minecraft:block/rail_flat_glow"
+    },
+    "shape=east_west": {
+      "model": "minecraft:block/rail_flat_glow",
+      "y": 90
+    },
+    "shape=ascending_east": {
+      "model": "minecraft:block/rail_raised_glow_ne",
+      "y": 90
+    },
+    "shape=ascending_west": {
+      "model": "minecraft:block/rail_raised_glow_sw",
+      "y": 90
+    },
+    "shape=ascending_north": {
+      "model": "minecraft:block/rail_raised_glow_ne"
+    },
+    "shape=ascending_south": {
+      "model": "minecraft:block/rail_raised_glow_sw"
+    },
+    "shape=south_east": {
+      "model": "minecraft:block/rail_corner",
+      "y": 0
+    },
+    "shape=south_west": {
+      "model": "minecraft:block/rail_corner",
+      "y": 90
+    },
+    "shape=north_west": {
+      "model": "minecraft:block/rail_corner",
+      "y": 180
+    },
+    "shape=north_east": {
+      "model": "minecraft:block/rail_corner",
+      "y": 270
+    }
+  }
+}

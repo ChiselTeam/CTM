@@ -1,0 +1,7 @@
+{
+  "textures": {
+    "overlay_connected": "minecraft:block/glass-ctm",
+    "overlay_texture": "minecraft:block/glass",
+    "particle": "minecraft:block/glass"
+  }
+}

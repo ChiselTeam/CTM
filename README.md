@@ -43,6 +43,7 @@ dependencies {
 For detailed information on how to use the library, see the following guides:
 
 - [**Data Generation Guide**](docs/DATAGEN.md) - Learn how to use the fluent API to generate models.
+- [**Model JSON Format**](docs/MODELS.md) - Detailed specification of the CTM model JSON format.
 
 ## Basic Usage
 

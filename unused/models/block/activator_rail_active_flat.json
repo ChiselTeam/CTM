@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/rail_flat_glow",
+  "textures": {
+    "rail": "minecraft:block/activator_rail_on",
+    "rail_glow": "minecraft:block/rail_activator_glow",
+    "rail_glow_faint": "minecraft:block/rail_glow_faint",
+    "rail_glow_faint_2": "minecraft:block/rail_glow_faint"
+  }
+}

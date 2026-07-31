@@ -3,7 +3,6 @@ package io.github.chiselteam.ctm.api.datagen;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;

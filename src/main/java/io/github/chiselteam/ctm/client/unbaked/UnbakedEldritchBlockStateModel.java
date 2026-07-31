@@ -9,11 +9,13 @@ import net.minecraft.client.resources.model.ResolvableModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.jspecify.annotations.NonNull;
 
+import net.minecraft.client.resources.model.UnbakedModel;
+
 /**
  * JSON-level wrapper that takes any inner {@link BlockStateModel.Unbaked} and produces
  * an {@link EldritchBlockStateModel} at bake time.
  */
-public class UnbakedEldritchBlockStateModel implements CustomUnbakedBlockStateModel {
+public class UnbakedEldritchBlockStateModel implements CustomUnbakedBlockStateModel, UnbakedModel {
 
     private final BlockStateModel.Unbaked inner;
 

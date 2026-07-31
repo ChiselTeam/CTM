@@ -1,0 +1,28 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "ctm:block/obsidian",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:obsidian",
+    "kind": "edges_full"
+  },
+  "connects_to": [
+    {
+      "id": "minecraft:nether_portal"
+    }
+  ],
+  "overlays": [
+    {
+      "material": "overlay",
+      "conditions": {
+        "neighbors": [
+          {
+            "id": "minecraft:nether_portal"
+          }
+        ]
+      }
+    }
+  ]
+}

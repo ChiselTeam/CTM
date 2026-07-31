@@ -8,6 +8,7 @@ public final class CTMTextureKeys {
     public static final String BASE = "base_texture";
     public static final String OVERLAY = "overlay_texture";
     public static final String OVERLAY_CONNECTED = "overlay_connected";
+    public static final String OVERLAY_OBSCURED = "overlay_obscured";
     public static final String OVERLAY_TOP = "overlay_top";
     public static final String OVERLAY_BOTTOM = "overlay_bottom";
     public static final String OVERLAY_SIDE = "overlay_side";

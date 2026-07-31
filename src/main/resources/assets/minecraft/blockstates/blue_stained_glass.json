@@ -1,0 +1,11 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "ctm:block/blue_stained_glass",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:blue_stained_glass",
+    "kind": "standard"
+  }
+}

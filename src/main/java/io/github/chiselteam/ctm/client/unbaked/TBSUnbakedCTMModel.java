@@ -1,5 +1,7 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import com.mojang.datafixers.util.Pair;
@@ -31,6 +33,10 @@ import java.util.*;
 
 public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
+    public TBSUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    }
+
     public TBSUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity);
     }
@@ -49,42 +55,55 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
             state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
         }
 
-        TextureSlots textureSlots = model.getTopTextureSlots();
-        Material baseMaterial = textureSlots.getMaterial("base_texture");
-        Material overlayMaterial = textureSlots.getMaterial("overlay_texture");
-        Material particleMaterial = textureSlots.getMaterial("particle");
+        Material baseMaterial = getMaterial(model, "base_texture");
+        Material overlayMaterial = getMaterial(model, "overlay_texture");
+        Material particleMaterial = getMaterial(model, "particle");
 
-        Material topMaterial = textureSlots.getMaterial("top");
-        Material bottomMaterial = textureSlots.getMaterial("bottom");
-        Material sideMaterial = textureSlots.getMaterial("side");
+        Material topMaterial = getMaterial(model, "top");
+        Material bottomMaterial = getMaterial(model, "bottom");
+        Material sideMaterial = getMaterial(model, "side");
 
-        Material overlayTopMaterial = textureSlots.getMaterial("overlay_top");
-        Material overlayBottomMaterial = textureSlots.getMaterial("overlay_bottom");
-        Material overlaySideMaterial = textureSlots.getMaterial("overlay_side");
+        Material overlayTopMaterial = getMaterial(model, "overlay_top");
+        Material overlayBottomMaterial = getMaterial(model, "overlay_bottom");
+        Material overlaySideMaterial = getMaterial(model, "overlay_side");
 
-        Material overlayTopConnectedMaterial = textureSlots.getMaterial("overlay_top_connected");
-        Material overlayBottomConnectedMaterial = textureSlots.getMaterial("overlay_bottom_connected");
-        Material overlaySideConnectedMaterial = textureSlots.getMaterial("overlay_side_connected");
-        Material overlayConnectedMaterial = textureSlots.getMaterial("overlay_connected");
+        Material overlayTopConnectedMaterial = getMaterial(model, "overlay_top_connected");
+        Material overlayBottomConnectedMaterial = getMaterial(model, "overlay_bottom_connected");
+        Material overlaySideConnectedMaterial = getMaterial(model, "overlay_side_connected");
+        Material overlayConnectedMaterial = getMaterial(model, "overlay_connected");
 
-        Material layer0Material = textureSlots.getMaterial("layer0");
-        Material layer1Material = textureSlots.getMaterial("layer1");
+        Material layer0Material = getMaterial(model, "layer0");
+        Material layer1Material = getMaterial(model, "layer1");
 
-        Material.Baked bakedBase = (baseMaterial != null ? baker.materials().get(baseMaterial, model) : (layer0Material != null ? baker.materials().get(layer0Material, model) : null));
-        Material.Baked bakedOverlay = overlayMaterial != null ? baker.materials().get(overlayMaterial, model) : (layer1Material != null ? baker.materials().get(layer1Material, model) : null);
-        Material.Baked bakedParticle = particleMaterial != null ? baker.materials().get(particleMaterial, model) : (bakedBase != null ? bakedBase : bakedOverlay);
+        Material.Baked bakedBase = bakeMaterial(baker, baseMaterial, model);
+        Material.Baked bakedOverlay = bakeMaterial(baker, overlayMaterial, model);
+        Material.Baked bakedParticle = bakeMaterial(baker, particleMaterial, model);
 
-        Material.Baked bakedTop = topMaterial != null ? baker.materials().get(topMaterial, model) : bakedBase;
-        Material.Baked bakedBottom = bottomMaterial != null ? baker.materials().get(bottomMaterial, model) : bakedBase;
-        Material.Baked bakedSide = sideMaterial != null ? baker.materials().get(sideMaterial, model) : bakedBase;
+        Material.Baked bakedTop = bakeMaterial(baker, topMaterial, model);
+        if (bakedTop == null) bakedTop = bakedBase;
+        Material.Baked bakedBottom = bakeMaterial(baker, bottomMaterial, model);
+        if (bakedBottom == null) bakedBottom = bakedBase;
+        Material.Baked bakedSide = bakeMaterial(baker, sideMaterial, model);
+        if (bakedSide == null) bakedSide = bakedBase;
 
-        Material.Baked bakedOverlayTop = overlayTopMaterial != null ? baker.materials().get(overlayTopMaterial, model) : bakedOverlay;
-        Material.Baked bakedOverlayBottom = overlayBottomMaterial != null ? baker.materials().get(overlayBottomMaterial, model) : bakedOverlay;
-        Material.Baked bakedOverlaySide = overlaySideMaterial != null ? baker.materials().get(overlaySideMaterial, model) : bakedOverlay;
+        Material.Baked bakedOverlayTop = bakeMaterial(baker, overlayTopMaterial, model);
+        if (bakedOverlayTop == null) bakedOverlayTop = bakedOverlay;
+        Material.Baked bakedOverlayBottom = bakeMaterial(baker, overlayBottomMaterial, model);
+        if (bakedOverlayBottom == null) bakedOverlayBottom = bakedOverlay;
+        Material.Baked bakedOverlaySide = bakeMaterial(baker, overlaySideMaterial, model);
+        if (bakedOverlaySide == null) bakedOverlaySide = bakedOverlay;
 
-        Material.Baked bakedOverlayTopConnected = overlayTopConnectedMaterial != null ? baker.materials().get(overlayTopConnectedMaterial, model) : (overlayConnectedMaterial != null ? baker.materials().get(overlayConnectedMaterial, model) : null);
-        Material.Baked bakedOverlayBottomConnected = overlayBottomConnectedMaterial != null ? baker.materials().get(overlayBottomConnectedMaterial, model) : (overlayConnectedMaterial != null ? baker.materials().get(overlayConnectedMaterial, model) : null);
-        Material.Baked bakedOverlaySideConnected = overlaySideConnectedMaterial != null ? baker.materials().get(overlaySideConnectedMaterial, model) : (overlayConnectedMaterial != null ? baker.materials().get(overlayConnectedMaterial, model) : null);
+        Material.Baked bakedOverlayTopConnected = bakeMaterial(baker, overlayTopConnectedMaterial != null ? overlayTopConnectedMaterial : overlayConnectedMaterial, model);
+        Material.Baked bakedOverlayBottomConnected = bakeMaterial(baker, overlayBottomConnectedMaterial != null ? overlayBottomConnectedMaterial : overlayConnectedMaterial, model);
+        Material.Baked bakedOverlaySideConnected = bakeMaterial(baker, overlaySideConnectedMaterial != null ? overlaySideConnectedMaterial : overlayConnectedMaterial, model);
+
+        if (bakedOverlayTop == null) bakedOverlayTop = bakedOverlayTopConnected;
+        if (bakedOverlayBottom == null) bakedOverlayBottom = bakedOverlayBottomConnected;
+        if (bakedOverlaySide == null) bakedOverlaySide = bakedOverlaySideConnected;
+
+        if (bakedOverlayTopConnected == null) bakedOverlayTopConnected = bakedOverlayTop;
+        if (bakedOverlayBottomConnected == null) bakedOverlayBottomConnected = bakedOverlayBottom;
+        if (bakedOverlaySideConnected == null) bakedOverlaySideConnected = bakedOverlaySide;
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[][]> connectedQuads = new EnumMap<>(Direction.class);
@@ -161,6 +180,7 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
             connectedQuads.put(face, connQuads);
         }
 
-        return new TBSCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant);
+        List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
+        return new TBSCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state));
     }
 }

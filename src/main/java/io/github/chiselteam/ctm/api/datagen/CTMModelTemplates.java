@@ -47,11 +47,10 @@ public final class CTMModelTemplates {
      */
     public static final ModelTemplate AR = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY);
 
+    public static final ModelTemplate EDGES = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, CTMTextureSlots.OVERLAY_OBSCURED, TextureSlot.PARTICLE);
+    public static final ModelTemplate EDGES_FULL = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, TextureSlot.PARTICLE);
+
     private static ModelTemplate template(Identifier loader, TextureSlot... requiredSlots) {
-        // We use the loader ID as the template "base" model CONCEPTUALLY.
-        // In vanilla datagen, ModelTemplate usually takes a parent model ResourceLocation.
-        // For custom loaders, the loader ID itself is used in the "loader" field.
-        // We pass empty Optional for parent because we want the "loader" field to be the primary differentiator.
         return new ModelTemplate(Optional.empty(), Optional.of(loader.toString()), requiredSlots);
     }
 

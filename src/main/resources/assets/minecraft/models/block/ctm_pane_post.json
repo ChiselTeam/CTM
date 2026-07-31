@@ -1,0 +1,44 @@
+{
+  "__comment": "Copyright \u00a9 InsomniaKitten 2017",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "#side",
+    "cap": "#cap"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "texture": "#cap",
+          "cullface": "down"
+        },
+        "up": {
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ],
+          "texture": "#cap",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

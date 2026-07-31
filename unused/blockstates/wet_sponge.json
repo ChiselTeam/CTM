@@ -1,0 +1,11 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "ctm:block/wet_sponge",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:wet_sponge",
+    "kind": "standard"
+  }
+}

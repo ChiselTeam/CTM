@@ -10,6 +10,7 @@ public final class CTMTextureSlots {
     public static final TextureSlot BASE = TextureSlot.create("base_texture");
     public static final TextureSlot OVERLAY = TextureSlot.create("overlay_texture");
     public static final TextureSlot OVERLAY_CONNECTED = TextureSlot.create("overlay_connected");
+    public static final TextureSlot OVERLAY_OBSCURED = TextureSlot.create("overlay_obscured");
     public static final TextureSlot OVERLAY_TOP = TextureSlot.create("overlay_top");
     public static final TextureSlot OVERLAY_BOTTOM = TextureSlot.create("overlay_bottom");
     public static final TextureSlot OVERLAY_SIDE = TextureSlot.create("overlay_side");

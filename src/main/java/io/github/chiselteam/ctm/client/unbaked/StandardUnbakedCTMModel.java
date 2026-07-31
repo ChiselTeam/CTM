@@ -1,7 +1,9 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
-import io.github.chiselteam.ctm.api.strategy.CTMLogic;
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
 import com.mojang.math.Transformation;
@@ -31,6 +33,10 @@ import java.util.*;
 
 public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
+    public StandardUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    }
+
     public StandardUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity);
     }
@@ -49,19 +55,29 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
             state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
         }
 
-        TextureSlots textureSlots = model.getTopTextureSlots();
-        Material baseMaterial = textureSlots.getMaterial("base_texture");
-        Material overlayMaterial = textureSlots.getMaterial("overlay_texture");
-        Material overlayConnectedMaterial = textureSlots.getMaterial("overlay_connected");
-        Material particleMaterial = textureSlots.getMaterial("particle");
+        Material baseMaterial = getMaterial(model, "base_texture");
+        Material overlayMaterial = getMaterial(model, "overlay_texture");
+        Material overlayConnectedMaterial = getMaterial(model, "overlay_connected");
+        Material particleMaterial = getMaterial(model, "particle");
 
-        Material layer0Material = textureSlots.getMaterial("layer0");
-        Material layer1Material = textureSlots.getMaterial("layer1");
+        Material layer0Material = getMaterial(model, "layer0");
+        Material layer1Material = getMaterial(model, "layer1");
 
-        Material.Baked bakedBase = (baseMaterial != null ? baker.materials().get(baseMaterial, model) : (layer0Material != null ? baker.materials().get(layer0Material, model) : null));
-        Material.Baked bakedOverlay = overlayMaterial != null ? baker.materials().get(overlayMaterial, model) : (layer1Material != null ? baker.materials().get(layer1Material, model) : null);
-        Material.Baked bakedOverlayConnected = overlayConnectedMaterial != null ? baker.materials().get(overlayConnectedMaterial, model) : (layer1Material != null ? baker.materials().get(layer1Material, model) : null);
-        Material.Baked bakedParticle = particleMaterial != null ? baker.materials().get(particleMaterial, model) : (bakedBase != null ? bakedBase : bakedOverlay);
+        Material.Baked bakedBase = bakeMaterial(baker, baseMaterial, model);
+        Material.Baked bakedOverlay = bakeMaterial(baker, overlayMaterial, model);
+        Material.Baked bakedOverlayConnected = bakeMaterial(baker, overlayConnectedMaterial, model);
+
+        if (bakedOverlay == null) {
+            bakedOverlay = bakedOverlayConnected;
+        }
+        if (bakedOverlayConnected == null) {
+            bakedOverlayConnected = bakedOverlay;
+        }
+
+        Material.Baked bakedParticle = bakeMaterial(baker, particleMaterial, model);
+        if (bakedParticle == null) {
+            bakedParticle = (bakedBase != null ? bakedBase : bakedOverlay);
+        }
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[][]> connectedQuads = new EnumMap<>(Direction.class);
@@ -118,6 +134,7 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
             connectedQuads.put(face, connQuads);
         }
 
-        return new StandardCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant);
+        List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
+        return new StandardCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state));
     }
 }

@@ -1,20 +1,29 @@
 package io.github.chiselteam.ctm.client;
 
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import com.mojang.datafixers.util.Pair;
+import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvableModel;
+import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
+import net.minecraft.client.resources.model.cuboid.FaceBakery;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Set;
+import java.util.*;
 
-public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements CustomUnbakedBlockStateModel {
+public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements CustomUnbakedBlockStateModel, UnbakedModel {
 
     protected final Identifier modelLocation;
     protected final Pair<Vector3f, Vector3f> element;
@@ -26,8 +35,11 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     protected final int tintIndex;
     protected final int emissivity;
     protected final boolean eldritch;
+    protected final CTMBlockPredicate connectionPredicate;
+    protected final List<CTMModelCodecs.UnbakedOverlayRule> overlays;
+    protected final Map<String, Identifier> textureSlots;
 
-    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch) {
+    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         this.modelLocation = modelLocation;
         this.element = element;
         this.connectedFaces = connectedFaces;
@@ -38,6 +50,17 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         this.tintIndex = tintIndex;
         this.emissivity = emissivity;
         this.eldritch = eldritch;
+        this.connectionPredicate = connectionPredicate;
+        this.overlays = overlays;
+        this.textureSlots = textureSlots;
+    }
+
+    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays) {
+        this(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, Map.of());
+    }
+
+    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch) {
+        this(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, CTMBlockPredicate.sameBlock(), List.of());
     }
 
     protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -50,6 +73,57 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     }
 
     public abstract @NonNull BlockStateModel bake(@NonNull ModelBaker baker);
+
+    protected List<CTMOverlayRule> bakeOverlays(ResolvedModel model) {
+        List<CTMOverlayRule> baked = new ArrayList<>();
+        for (CTMModelCodecs.UnbakedOverlayRule unbaked : overlays) {
+            Material mat = getMaterial(model, unbaked.material());
+            if (mat != null) {
+                baked.add(new CTMOverlayRule(mat, unbaked.faces(), unbaked.condition(), unbaked.priority(), unbaked.tintIndex(), unbaked.emissivity()));
+            }
+        }
+        return baked;
+    }
+
+    protected Material getMaterial(ResolvedModel model, String name) {
+        Identifier override = textureSlots.get(name);
+        if (override != null) {
+            return new Material(override, false);
+        }
+        Material mat = model.getTopTextureSlots().getMaterial(name);
+        if (mat == null) {
+            if (name.equals("base_texture") || name.equals("overlay_texture") || name.equals("overlay_connected")) {
+                mat = model.getTopTextureSlots().getMaterial("all");
+                if (mat == null) {
+                    mat = model.getTopTextureSlots().getMaterial("layer0");
+                }
+            }
+        }
+        return mat;
+    }
+
+    protected Material.Baked bakeMaterial(ModelBaker baker, Material material, ResolvedModel context) {
+        if (material == null) return null;
+        return baker.materials().get(material, context);
+    }
+
+    protected Map<CTMOverlayRule, Map<Direction, BakedQuad>> bakeOverlayQuads(ModelBaker baker, List<CTMOverlayRule> rules, ResolvedModel model, Vector3f from, Vector3f to, ModelState state) {
+        Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads = new HashMap<>();
+        for (CTMOverlayRule rule : rules) {
+            Map<Direction, BakedQuad> quads = new EnumMap<>(Direction.class);
+            Material.Baked bakedMat = bakeMaterial(baker, rule.material(), model);
+            if (bakedMat != null) {
+                for (Direction face : rule.faces()) {
+                    Direction cull = getCullface(face, from, to);
+                    CuboidFace overlayFace = new CuboidFace(cull, rule.tintIndex(), "", new CuboidFace.UVs(0, 0, 16, 16), com.mojang.math.Quadrant.R0);
+                    Vector3f[] offsets = getOffsets(face, from, to);
+                    quads.put(face, FaceBakery.bakeQuad(baker, offsets[0], offsets[1], overlayFace, bakedMat, face, state, null, true, rule.emissivity()));
+                }
+            }
+            ruleQuads.put(rule, quads);
+        }
+        return ruleQuads;
+    }
 
     protected Direction getCullface(Direction direction, Vector3f from, Vector3f to) {
         boolean cull = switch (direction) {

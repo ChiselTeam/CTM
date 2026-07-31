@@ -1,7 +1,9 @@
 package io.github.chiselteam.ctm.api.datagen;
 
 import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
+import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.renderer.block.dispatch.VariantMutator;
@@ -13,7 +15,11 @@ import net.neoforged.neoforge.client.model.generators.blockstate.UnbakedMutator;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,6 +48,9 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private int emissivity = 0;
     private boolean eldritch = false;
     private boolean waterOffset = false;
+    private CTMBlockPredicate connectionPredicate = CTMBlockPredicate.sameBlock();
+    private final List<CTMModelCodecs.UnbakedOverlayRule> overlays = new ArrayList<>();
+    private final Map<String, Identifier> textureSlots = new HashMap<>();
 
     protected CTMModelBuilder(Block block, CTMKind kind) {
         this.block = block;
@@ -111,6 +120,38 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return new CTMModelBuilder(block, CTMKind.AR).modelLocation(modelLocation);
     }
 
+    /**
+     * Creates a builder for a regular-edge CTM model.
+     *
+     * <p>Regular EDGES divides each face into four quadrants and chooses the
+     * connected region independently for each quadrant.
+     */
+    public static CTMModelBuilder edges(
+            Block block,
+            Identifier modelLocation
+    ) {
+        return new CTMModelBuilder(
+                block,
+                CTMKind.EDGES
+        ).modelLocation(modelLocation);
+    }
+
+    /**
+     * Creates a builder for a full-face-edge CTM model.
+     *
+     * <p>EDGES_FULL chooses one cell from a 4x4 texture atlas and maps it
+     * across the complete block face.
+     */
+    public static CTMModelBuilder edgesFull(
+            Block block,
+            Identifier modelLocation
+    ) {
+        return new CTMModelBuilder(
+                block,
+                CTMKind.EDGES_FULL
+        ).modelLocation(modelLocation);
+    }
+
     public CTMModelBuilder modelLocation(Identifier modelLocation) {
         this.modelLocation = modelLocation;
         return this;
@@ -161,6 +202,21 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return this;
     }
 
+    public CTMModelBuilder connectionPredicate(CTMBlockPredicate connectionPredicate) {
+        this.connectionPredicate = connectionPredicate;
+        return this;
+    }
+
+    public CTMModelBuilder overlay(CTMModelCodecs.UnbakedOverlayRule overlay) {
+        this.overlays.add(overlay);
+        return this;
+    }
+
+    public CTMModelBuilder texture(String slot, Identifier texture) {
+        this.textureSlots.put(slot, texture);
+        return this;
+    }
+
     @Override
     public @NonNull CTMModelBuilder with(@NonNull VariantMutator variantMutator) {
         return this;
@@ -179,6 +235,9 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         result.emissivity = this.emissivity;
         result.eldritch = this.eldritch;
         result.waterOffset = this.waterOffset;
+        result.connectionPredicate = this.connectionPredicate;
+        result.overlays.addAll(this.overlays);
+        result.textureSlots.putAll(this.textureSlots);
         return result;
     }
 
@@ -194,7 +253,10 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 baseEmissivity,
                 tintIndex,
                 emissivity,
-                eldritch
+                eldritch,
+                connectionPredicate,
+                overlays,
+                textureSlots
         );
     }
 }

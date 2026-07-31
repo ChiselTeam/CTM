@@ -1,5 +1,7 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import com.mojang.datafixers.util.Pair;
@@ -30,6 +32,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    }
 
     public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity);
@@ -64,9 +70,12 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         }
         Material particleMaterial = textureSlots.getMaterial("particle");
 
-        Material.Baked bakedBase = (baseMaterial != null ? baker.materials().get(baseMaterial, model) : null);
-        Material.Baked bakedOverlay = overlayARMaterial != null ? baker.materials().get(overlayARMaterial, model) : null;
-        Material.Baked bakedParticle = particleMaterial != null ? baker.materials().get(particleMaterial, model) : (bakedBase != null ? bakedBase : bakedOverlay);
+        Material.Baked bakedBase = bakeMaterial(baker, baseMaterial, model);
+        Material.Baked bakedOverlay = bakeMaterial(baker, overlayARMaterial, model);
+        Material.Baked bakedParticle = bakeMaterial(baker, particleMaterial, model);
+        if (bakedParticle == null) {
+            bakedParticle = (bakedBase != null ? bakedBase : bakedOverlay);
+        }
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[][]> connectedQuads = new EnumMap<>(Direction.class);
@@ -134,6 +143,7 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
             connectedQuads.put(face, connQuads);
         }
 
-        return new ARCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant);
+        List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
+        return new ARCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state));
     }
 }

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/rail_raised_glow_sw",
+  "textures": {
+    "rail": "minecraft:block/detector_rail_on",
+    "rail_glow": "minecraft:block/rail_detector_glow",
+    "rail_glow_faint": "minecraft:block/rail_detector_glow_half",
+    "rail_glow_faint_2": "minecraft:block/rail_detector_glow_quarter"
+  }
+}

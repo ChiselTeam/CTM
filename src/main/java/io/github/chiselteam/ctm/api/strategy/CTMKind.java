@@ -23,6 +23,11 @@ public enum CTMKind implements StringRepresentable {
     /** Vertical directional CTM. */
     CTMV("ctmv"),
 
+    /** Edges CTM: selects a single edge submap based on neighbor connections (X4 grid). */
+    EDGES("edges"),
+    /** Edges CTM (full): like EDGES but always applies as a single full-face overlay. */
+    EDGES_FULL("edges_full"),
+
     /** Fixed multiblock 2x2 tiling. */
     MULTIBLOCK_2X2("multiblock_2x2", 2),
     /** Fixed multiblock 3x3 tiling. */
@@ -85,6 +90,14 @@ public enum CTMKind implements StringRepresentable {
 
     public boolean isCTMV() {
         return this == CTMV;
+    }
+
+    public boolean isEdges() {
+        return this == EDGES;
+    }
+
+    public boolean isEdgesFull() {
+        return this == EDGES_FULL;
     }
 
     public boolean isV4() {

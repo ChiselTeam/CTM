@@ -1,0 +1,11 @@
+{
+  "neoforge:definition_type": "ctm:connected_texture_model",
+  "model_location": "ctm:block/orange_stained_glass",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:orange_stained_glass",
+    "kind": "standard"
+  }
+}

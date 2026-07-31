@@ -1,5 +1,7 @@
 package io.github.chiselteam.ctm.client.baked;
 
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMLogicHorizontal;
@@ -22,6 +24,43 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
 
     protected final Map<Direction, BakedQuad[]> horizontalQuads;
     protected final Map<Direction, BakedQuad[]> verticalQuads;
+    protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
+    private final Map<Direction, BakedQuad[]> effectiveBaseQuads;
+
+    public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces,
+                                         Set<Direction> unculledFaces,
+                                         boolean renderOverlayOnAllFaces,
+                                         Map<Direction, BakedQuad[]> baseQuads,
+                                         Map<Direction, BakedQuad[]> horizontalQuads,
+                                         Map<Direction, BakedQuad[]> verticalQuads,
+                                         TextureAtlasSprite particle,
+                                         CTMVariant variant,
+                                         CTMBlockPredicate connectionPredicate,
+                                         List<CTMOverlayRule> overlayRules,
+                                         Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, horizontalQuads, verticalQuads, ruleQuads));
+        this.horizontalQuads = horizontalQuads;
+        this.verticalQuads = verticalQuads;
+        this.ruleQuads = ruleQuads;
+        this.effectiveBaseQuads = computeEffectiveBaseQuads();
+    }
+
+    private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> horizontalQuads, Map<Direction, BakedQuad[]> verticalQuads, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
+        int flags = 0;
+        for (BakedQuad[] quads : baseQuads.values()) {
+            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
+        }
+        for (BakedQuad[] quads : horizontalQuads.values()) {
+            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
+        }
+        for (BakedQuad[] quads : verticalQuads.values()) {
+            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
+        }
+        for (Map<Direction, BakedQuad> sideMap : ruleQuads.values()) {
+            for (BakedQuad quad : sideMap.values()) if (quad != null) flags |= quad.materialInfo().flags();
+        }
+        return flags;
+    }
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces,
                                          Set<Direction> unculledFaces,
@@ -34,6 +73,8 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
+        this.ruleQuads = Map.of();
+        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     @Override
@@ -64,17 +105,66 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
     }
 
     @Override
-    protected ConnectedTextureBlockModelPart createPart(DirectionalCTMKey key) {
+    protected ConnectedTextureBlockModelPart createPart(DirectionalCTMKey key, long overlayMask) {
         return CTMPartBuilder.create(
-                baseQuads,
+                effectiveBaseQuads,
                 unculledFaces,
                 particleMaterial,
                 (side, faceQuads) -> {
                     if (shouldRenderDirectionalOverlay(side)) {
                         appendDirectionalQuad(key, side, faceQuads);
                     }
+                    appendOverlayQuads(overlayMask, side, faceQuads);
                 }
         );
+    }
+
+    protected void appendOverlayQuads(long mask, Direction side, List<BakedQuad> faceQuads) {
+        if (mask == 0) return;
+        int ruleCount = Math.min(overlayRules.size(), 10);
+        for (int i = 0; i < ruleCount; i++) {
+            if ((mask & (1L << (i * 6 + side.ordinal()))) != 0) {
+                CTMOverlayRule rule = overlayRules.get(i);
+                Map<Direction, BakedQuad> quads = ruleQuads.get(rule);
+                if (quads != null) {
+                    BakedQuad quad = quads.get(side);
+                    if (quad != null) {
+                        faceQuads.add(quad);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * The CTMH/CTMV tile quads are baked coplanar with the base quads and fully cover the face,
+     * so the base quad must be dropped on any side where a directional tile quad will always render,
+     * otherwise the two quads z-fight. Bookshelf-like kinds are inset and keep their base quads.
+     * With a water offset the tile quads are offset off-plane, so the base quads must be kept,
+     * otherwise the base layer disappears.
+     */
+    private Map<Direction, BakedQuad[]> computeEffectiveBaseQuads() {
+        if (variant.waterOffset()) {
+            return baseQuads;
+        }
+        CTMKind kind = variant.kind();
+        Map<Direction, BakedQuad[]> tileQuads;
+        if (kind.isCTMH()) {
+            tileQuads = horizontalQuads;
+        } else if (kind.isCTMV()) {
+            tileQuads = verticalQuads;
+        } else {
+            return baseQuads;
+        }
+        Map<Direction, BakedQuad[]> result = new EnumMap<>(Direction.class);
+        for (Map.Entry<Direction, BakedQuad[]> entry : baseQuads.entrySet()) {
+            Direction side = entry.getKey();
+            if (shouldRenderDirectionalOverlay(side) && tileQuads.get(side) != null) {
+                continue;
+            }
+            result.put(side, entry.getValue());
+        }
+        return result;
     }
 
     private boolean shouldRenderDirectionalOverlay(Direction side) {

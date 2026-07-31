@@ -1,0 +1,7 @@
+{
+  "textures": {
+    "overlay_connected": "minecraft:block/glass_magenta-ctm",
+    "overlay_texture": "minecraft:block/magenta_stained_glass",
+    "particle": "minecraft:block/magenta_stained_glass"
+  }
+}
