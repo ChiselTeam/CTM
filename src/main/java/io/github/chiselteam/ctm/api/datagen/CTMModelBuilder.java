@@ -58,6 +58,13 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     }
 
     /**
+     * Creates a builder for any CTM kind.
+     */
+    public static CTMModelBuilder of(Block block, CTMKind kind, Identifier modelLocation) {
+        return new CTMModelBuilder(block, kind).modelLocation(modelLocation);
+    }
+
+    /**
      * Creates a builder for a standard 5-bit CTM model.
      */
     public static CTMModelBuilder standard(Block block, Identifier modelLocation) {
