@@ -15,12 +15,7 @@ import net.neoforged.neoforge.client.model.generators.blockstate.UnbakedMutator;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Datagen-side builder for {@link UnbakedConnectedTextureBlockStateModel}s.
@@ -40,7 +35,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private final CTMKind kind;
     private Identifier modelLocation;
     private Pair<Vector3f, Vector3f> element = Pair.of(new Vector3f(0, 0, 0), new Vector3f(16, 16, 16));
-    private final Set<Direction> connectedFaces = new HashSet<>();
+    private final Set<Direction> connectedFaces = EnumSet.noneOf(Direction.class);
     private boolean renderOverlayOnAllFaces = false;
     private int baseTintIndex = -1;
     private int baseEmissivity = 0;
