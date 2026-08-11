@@ -90,6 +90,7 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 
     mainFile.changelog = file('CHANGELOG.md')
     mainFile.addModLoader("neoforge")
+    mainFile.addGameVersion("Client", "Server")
     mainFile.releaseType = release_type
 }
 
