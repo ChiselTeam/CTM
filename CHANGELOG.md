@@ -1,6 +1,9 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [26.1.2.4]
+
+- Added `layered_connected_texture_model`, allowing multiple CTM layers on the
+  same face to calculate and render their connections independently.
 
 ## [26.1.2.3]
 

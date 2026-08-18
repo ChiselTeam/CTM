@@ -3,6 +3,7 @@ package io.github.chiselteam.ctm.api.datagen;
 import net.minecraft.client.data.models.blockstates.BlockModelDefinitionGenerator;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.client.model.block.CustomBlockModelDefinition;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -12,18 +13,28 @@ import org.jspecify.annotations.NonNull;
 public class CTMBlockStateGenerator implements BlockModelDefinitionGenerator {
 
     private final Block block;
-    private final CTMModelBuilder builder;
+    private final CustomBlockModelDefinition definition;
 
-    private CTMBlockStateGenerator(Block block, CTMModelBuilder builder) {
+    private CTMBlockStateGenerator(Block block, CustomBlockModelDefinition definition) {
         this.block = block;
-        this.builder = builder;
+        this.definition = definition;
     }
 
     /**
      * Creates a generator for the given block using the provided CTM builder.
      */
     public static CTMBlockStateGenerator of(Block block, CTMModelBuilder builder) {
-        return new CTMBlockStateGenerator(block, builder);
+        return new CTMBlockStateGenerator(block, new CTMBlockModelDefinition(builder.toUnbaked()));
+    }
+
+    /** Creates a generator for independently connecting CTM layers. */
+    public static CTMBlockStateGenerator of(Block block, LayeredCTMModelBuilder builder) {
+        return new CTMBlockStateGenerator(block, new LayeredCTMBlockModelDefinition(builder.toUnbaked()));
+    }
+
+    /** Named alias for {@link #of(Block, LayeredCTMModelBuilder)}. */
+    public static CTMBlockStateGenerator layered(Block block, LayeredCTMModelBuilder builder) {
+        return of(block, builder);
     }
 
     @Override
@@ -34,8 +45,7 @@ public class CTMBlockStateGenerator implements BlockModelDefinitionGenerator {
     @Override
     public @NonNull BlockStateModelDispatcher create() {
         // CTM library's model loader is registered via RegisterBlockStateModels.
-        // The builder produces an UnbakedConnectedTextureBlockStateModel.
-        // We use it as the unbaked root for all states of this block.
-        return new BlockStateModelDispatcher(new CTMBlockModelDefinition(builder.toUnbaked()));
+        // Use the definition as the unbaked root for every state of this block.
+        return new BlockStateModelDispatcher(definition);
     }
 }

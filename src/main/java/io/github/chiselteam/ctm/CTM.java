@@ -1,7 +1,9 @@
 package io.github.chiselteam.ctm;
 
 import io.github.chiselteam.ctm.api.datagen.CTMBlockModelDefinition;
+import io.github.chiselteam.ctm.api.datagen.LayeredCTMBlockModelDefinition;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
+import io.github.chiselteam.ctm.client.unbaked.UnbakedLayeredCTMBlockStateModel;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedEldritchBlockStateModel;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -20,6 +22,7 @@ public final class CTM {
     public static final Identifier CTM_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "connected_texture_model");
     public static final Identifier ELDRITCH_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "eldritch_model");
     public static final Identifier CTM_DEFINITION_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "connected_texture_model");
+    public static final Identifier LAYERED_CTM_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "layered_connected_texture_model");
 
     public CTM(IEventBus bus) {
          bus.addListener(this::registerModelLoaders);
@@ -35,7 +38,9 @@ public final class CTM {
     @SubscribeEvent
     public void registerModelLoaders(RegisterBlockStateModels event) {
         event.registerModel(CTM_MODEL_ID, UnbakedConnectedTextureBlockStateModel.CODEC);
+        event.registerModel(LAYERED_CTM_MODEL_ID, UnbakedLayeredCTMBlockStateModel.CODEC);
         event.registerModel(ELDRITCH_MODEL_ID, UnbakedEldritchBlockStateModel.CODEC);
         event.registerDefinition(CTM_DEFINITION_ID, CTMBlockModelDefinition.CODEC);
+        event.registerDefinition(LAYERED_CTM_MODEL_ID, LayeredCTMBlockModelDefinition.CODEC);
     }
 }

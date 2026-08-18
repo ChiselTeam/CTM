@@ -19,6 +19,7 @@ import io.github.chiselteam.ctm.api.strategy.CTMLogicV9;
 import io.github.chiselteam.ctm.api.geometry.MultiblockCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
+import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -99,24 +100,27 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
 
     @Override
     protected MultiblockCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
-        BlockPos offsetPos = MultiblockOffsetProvider.get().offsetFor(pos);
+        CTMLogicOrientation orientation = CTMLogicOrientation.of(state);
+        BlockPos localPos = orientation.toLocal(pos);
+        BlockPos offsetPos = orientation.toLocal(MultiblockOffsetProvider.get().offsetFor(pos));
 
-        CTMLogicR4 sharedR4 = CTMLogicR4.values()[randomIndex(pos, 4, 4)];
-        CTMLogicR9 sharedR9 = CTMLogicR9.values()[randomIndex(pos, 9, 9)];
-        CTMLogicR16 sharedR16 = CTMLogicR16.values()[randomIndex(pos, 16, 16)];
+        CTMLogicR4 sharedR4 = CTMLogicR4.values()[randomIndex(localPos, 4, 4)];
+        CTMLogicR9 sharedR9 = CTMLogicR9.values()[randomIndex(localPos, 9, 9)];
+        CTMLogicR16 sharedR16 = CTMLogicR16.values()[randomIndex(localPos, 16, 16)];
 
         int mb2x2 = 0; int mb3x3 = 0; int mb4x4 = 0;
         int v4 = 0; int v9 = 0; int v16 = 0;
         int r4 = 0; int r9 = 0; int r16 = 0;
 
         for(Direction face : Direction.values()) {
-            mb2x2 |= MultiblockCTMKey.pack(face, CTMLogic2x2.get(pos, face));
-            mb3x3 |= MultiblockCTMKey.pack(face, CTMLogic3x3.get(pos, face));
-            mb4x4 |= MultiblockCTMKey.pack(face, CTMLogic4x4.get(pos, face));
+            Direction localFace = orientation.toLocal(face);
+            mb2x2 |= MultiblockCTMKey.pack(face, CTMLogic2x2.get(localPos, localFace));
+            mb3x3 |= MultiblockCTMKey.pack(face, CTMLogic3x3.get(localPos, localFace));
+            mb4x4 |= MultiblockCTMKey.pack(face, CTMLogic4x4.get(localPos, localFace));
 
-            v4 |= MultiblockCTMKey.pack(face, CTMLogicV4.get(offsetPos, face));
-            v9 |= MultiblockCTMKey.pack(face, CTMLogicV9.get(offsetPos, face));
-            v16 |= MultiblockCTMKey.pack(face, CTMLogicV16.get(offsetPos, face));
+            v4 |= MultiblockCTMKey.pack(face, CTMLogicV4.get(offsetPos, localFace));
+            v9 |= MultiblockCTMKey.pack(face, CTMLogicV9.get(offsetPos, localFace));
+            v16 |= MultiblockCTMKey.pack(face, CTMLogicV16.get(offsetPos, localFace));
 
             r4 |= MultiblockCTMKey.pack(face, sharedR4);
             r9 |= MultiblockCTMKey.pack(face, sharedR9);

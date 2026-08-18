@@ -10,6 +10,7 @@ import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.StandardCTMOverlayTable;
+import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -61,13 +62,14 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
     @Override
     protected EdgesCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
                                         RandomSource random) {
+        CTMLogicOrientation orientation = CTMLogicOrientation.of(state);
         return new EdgesCTMKey(
-                computeFace(level, pos, state, Direction.DOWN),
-                computeFace(level, pos, state, Direction.UP),
-                computeFace(level, pos, state, Direction.NORTH),
-                computeFace(level, pos, state, Direction.SOUTH),
-                computeFace(level, pos, state, Direction.WEST),
-                computeFace(level, pos, state, Direction.EAST)
+                computeFace(level, pos, state, Direction.DOWN, orientation),
+                computeFace(level, pos, state, Direction.UP, orientation),
+                computeFace(level, pos, state, Direction.NORTH, orientation),
+                computeFace(level, pos, state, Direction.SOUTH, orientation),
+                computeFace(level, pos, state, Direction.WEST, orientation),
+                computeFace(level, pos, state, Direction.EAST, orientation)
         );
     }
 
@@ -101,14 +103,15 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
      * bit 8 = obscured
      * </pre>
      */
-    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face) {
+    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMLogicOrientation orientation) {
         if (!connectedFaces.contains(face))
             return 0;
 
         if (matches(level, pos, state, face, pos.relative(face)))
             return EdgesCTMKey.OBSCURED;
 
-        Direction[] directions = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
+        Direction[] localDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[orientation.toLocal(face).getAxis().ordinal()];
+        Direction[] directions = java.util.Arrays.stream(localDirections).map(orientation::toWorld).toArray(Direction[]::new);
 
         Direction top = directions[0];
         Direction right = directions[1];

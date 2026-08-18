@@ -9,6 +9,7 @@ import io.github.chiselteam.ctm.api.geometry.StandardCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.StandardCTMOverlayTable;
+import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -65,13 +66,14 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
 
     @Override
     protected StandardCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
+        CTMLogicOrientation orientation = CTMLogicOrientation.of(state);
         return new StandardCTMKey(
-                computeFace(level, pos, state, Direction.DOWN),
-                computeFace(level, pos, state, Direction.UP),
-                computeFace(level, pos, state, Direction.NORTH),
-                computeFace(level, pos, state, Direction.SOUTH),
-                computeFace(level, pos, state, Direction.EAST),
-                computeFace(level, pos, state, Direction.WEST)
+                computeFace(level, pos, state, Direction.DOWN, orientation),
+                computeFace(level, pos, state, Direction.UP, orientation),
+                computeFace(level, pos, state, Direction.NORTH, orientation),
+                computeFace(level, pos, state, Direction.SOUTH, orientation),
+                computeFace(level, pos, state, Direction.EAST, orientation),
+                computeFace(level, pos, state, Direction.WEST, orientation)
         );
     }
 
@@ -107,13 +109,14 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
         }
     }
 
-    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face) {
-        Direction[] planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
+    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMLogicOrientation orientation) {
+        Direction localFace = orientation.toLocal(face);
+        Direction[] planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[localFace.getAxis().ordinal()];
         int packed = 0;
 
         for(int c = 0; c < 4; c++) {
-            Direction s1 = planeDirections[c];
-            Direction s2 = planeDirections[(c + 1) % 4];
+            Direction s1 = orientation.toWorld(planeDirections[c]);
+            Direction s2 = orientation.toWorld(planeDirections[(c + 1) % 4]);
 
             boolean horizontal = shouldConnectSide(level, pos, state, face, s1);
             boolean vertical = shouldConnectSide(level, pos, state, face, s2);

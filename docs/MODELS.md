@@ -8,6 +8,57 @@ The CTM library uses a NeoForge custom **blockstate model definition**. The CTM 
 
 This is not a vanilla model `loader` field. The `model_location` field points to a separate block model that supplies the texture slots and any model-level properties used while baking.
 
+## Independently connected texture layers
+
+Use `ctm:layered_connected_texture_model` to draw two or more CTM models on the
+same block. Entries are rendered in list order (bottom first). Every entry is a
+complete CTM definition and therefore computes its connection pattern
+independently; layers may use different `kind`, `connected_faces`, and
+`connects_to` values.
+
+```json
+{
+  "neoforge:definition_type": "ctm:layered_connected_texture_model",
+  "layers": [
+    {
+      "model_location": "my_mod:block/bottom_layer",
+      "connected_faces": ["all"],
+      "variant": {
+        "block": "my_mod:layered_block",
+        "kind": "standard"
+      },
+      "texture_slots": {
+        "overlay_texture": "my_mod:block/bottom_unconnected",
+        "overlay_connected": "my_mod:block/bottom_connected",
+        "particle": "my_mod:block/bottom_unconnected"
+      }
+    },
+    {
+      "model_location": "my_mod:block/top_layer",
+      "connected_faces": ["all"],
+      "variant": {
+        "block": "my_mod:layered_block",
+        "kind": "standard",
+        "water_offset": true
+      },
+      "texture_slots": {
+        "overlay_texture": "my_mod:block/top_unconnected",
+        "overlay_connected": "my_mod:block/top_connected",
+        "particle": "my_mod:block/top_unconnected"
+      },
+      "connects_to": [
+        { "id": "my_mod:top_connection_target" }
+      ]
+    }
+  ]
+}
+```
+
+The upper textures should contain transparency wherever the lower layer must
+remain visible. Setting `water_offset` on the upper layer offsets its quads by
+0.01 model units and prevents coplanar z-fighting. Particle material comes from
+the first layer, while material flags are combined from every layer.
+
 ## Minimal example
 
 ```json

@@ -63,6 +63,11 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return new CTMModelBuilder(block, kind).modelLocation(modelLocation);
     }
 
+    /** Composes CTM builders in bottom-to-top draw order. */
+    public static LayeredCTMModelBuilder layered(CTMModelBuilder bottom, CTMModelBuilder... upperLayers) {
+        return LayeredCTMModelBuilder.of(bottom, upperLayers);
+    }
+
     /**
      * Creates a builder for a standard 5-bit CTM model.
      */
@@ -170,6 +175,12 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
 
     public CTMModelBuilder connectedFace(Direction direction) {
         this.connectedFaces.add(direction);
+        return this;
+    }
+
+    /** Enables CTM connection logic on all six faces. */
+    public CTMModelBuilder allFaces() {
+        this.connectedFaces.addAll(EnumSet.allOf(Direction.class));
         return this;
     }
 

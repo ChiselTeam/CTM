@@ -10,6 +10,7 @@ Datagen normally performs two separate jobs:
 ## Core classes
 
 - `CTMModelBuilder`: Configures the custom CTM blockstate model.
+- `LayeredCTMModelBuilder`: Composes CTM builders in bottom-to-top draw order.
 - `CTMBlockStateGenerator`: Registers one CTM root model for every state of a block.
 - `CTMModelTemplates`: Convenience `ModelTemplate` instances for common texture layouts.
 - `CTMTextureSlots`: Datagen `TextureSlot` constants used by the templates.
@@ -59,6 +60,48 @@ CTMModelBuilder builder = CTMModelBuilder.standard(block, modelLocation)
         .texture(CTMTextureKeys.PARTICLE, base);
 ```
 
+## Layered CTM example
+
+Each layer is a normal `CTMModelBuilder`, so its unconnected and connected
+textures remain independent even when both layers use the same model location.
+Layers are rendered in the order supplied to `layered(...)`, from bottom to
+top. A typical two-layer model uses four textures:
+
+- An unconnected bottom texture
+- A connected bottom texture or CTM atlas
+- An unconnected top texture
+- A connected top texture or CTM atlas
+
+```java
+public void createLayeredModel(Block block, Identifier modelLocation, BlockModelGenerators blockModels) {
+    Identifier bottomTexture = Identifier.fromNamespaceAndPath("my_mod", "block/layer_bottom");
+    Identifier bottomConnected = Identifier.fromNamespaceAndPath("my_mod", "block/layer_bottom_ctm");
+    Identifier topTexture = Identifier.fromNamespaceAndPath("my_mod", "block/layer_top");
+    Identifier topConnected = Identifier.fromNamespaceAndPath("my_mod", "block/layer_top_ctm");
+
+    CTMModelBuilder bottom = CTMModelBuilder.standard(block, modelLocation)
+            .allFaces()
+            .texture(CTMTextureKeys.OVERLAY, bottomTexture)
+            .texture(CTMTextureKeys.OVERLAY_CONNECTED, bottomConnected)
+            .texture(CTMTextureKeys.PARTICLE, bottomTexture);
+
+    CTMModelBuilder top = CTMModelBuilder.standard(block, modelLocation)
+            .allFaces()
+            .waterOffset(true)
+            .texture(CTMTextureKeys.OVERLAY, topTexture)
+            .texture(CTMTextureKeys.OVERLAY_CONNECTED, topConnected)
+            .texture(CTMTextureKeys.PARTICLE, topTexture);
+
+    LayeredCTMModelBuilder layered = CTMModelBuilder.layered(bottom, top);
+    blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, layered));
+}
+```
+
+The top textures normally contain transparency so the bottom layer remains
+visible. `waterOffset(true)` moves the top geometry slightly outward to avoid
+z-fighting. It does not affect the layer's connection calculation. Each layer
+may also use a different CTM kind, face set, or connection predicate.
+
 ## Available builder factories
 
 The current `CTMModelBuilder` provides:
@@ -93,7 +136,8 @@ builder.renderOverlayOnAllFaces(true);
 - `connectedFace(direction)`: Adds one face to connection calculations.
 - `renderOverlayOnAllFaces(value)`: Renders an unconnected/default overlay on faces not participating in connection calculations.
 
-There is currently no `connectedFaces(...)` or `allFaces()` convenience method, so add all six directions with a loop when needed.
+- `allFaces()`: Adds all six directions to `connected_faces`.
+- Use repeated `connectedFace(...)` calls when only selected faces should connect.
 
 ### Tint and emissivity
 

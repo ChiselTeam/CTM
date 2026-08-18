@@ -8,6 +8,7 @@ import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.geometry.ARCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
+import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -55,7 +56,7 @@ public class ARCTMBlockStateModel extends AbstractConnectedTextureBlockStateMode
 
     @Override
     protected ARCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
-        return ARCTMKey.of(CTMLogicAR.get(pos));
+        return ARCTMKey.of(CTMLogicAR.get(CTMLogicOrientation.of(state).toLocal(pos)));
     }
 
     @Override
