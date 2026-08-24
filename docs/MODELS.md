@@ -94,6 +94,7 @@ the first layer, while material flags are combined from every layer.
   "base_emissivity": 0,
   "tint_index": -1,
   "emissivity": 0,
+  "shade": true,
   "eldritch": false,
   "texture_slots": {
     "base_texture": "my_mod:block/connected_block",
@@ -205,6 +206,7 @@ All fields are optional:
 - `base_emissivity`: Emissivity for the base layer. Default `0`.
 - `tint_index`: Tint index for the CTM overlay. Default `-1`.
 - `emissivity`: Emissivity for the CTM overlay. Default `0`.
+- `shade`: Enables Minecraft's directional diffuse face shading for every generated base and overlay quad. Default `true`. Set to `false` for uniformly colored faces; this is independent of emissivity.
 - `eldritch`: Wraps the baked model in the eldritch UV-transforming model. Default `false`.
 
 The JSON field is `tint_index`, not `tintIndex`.

@@ -33,8 +33,8 @@ import java.util.*;
 
 public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public StandardUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    public StandardUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     public StandardUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -112,7 +112,7 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
 
                 if (bakedBase != null) {
                     CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, true, baseEmissivity));
+                    baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
                 if (bakedOverlay != null && bakedOverlayConnected != null) {
@@ -123,7 +123,7 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
                             unculledFaces.add(face);
                         }
                         connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, qFrom, qTo,
-                                connFace, logic.chooseMaterial(sprites), face, state, null, true, emissivity);
+                                connFace, logic.chooseMaterial(sprites), face, state, null, shade, emissivity);
                     }
                 }
             }

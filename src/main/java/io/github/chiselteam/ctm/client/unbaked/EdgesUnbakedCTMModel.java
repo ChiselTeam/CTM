@@ -37,8 +37,8 @@ import java.util.Set;
 
 public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public EdgesUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    public EdgesUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     @Override
@@ -184,7 +184,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
 
                 if (bakedBase != null) {
                     CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", relativeUvs, Quadrant.R0);
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, quadFrom, quadTo, baseFace, bakedBase, face, state, null, true, baseEmissivity));
+                    baseQuadList.add(FaceBakery.bakeQuad(baker, quadFrom, quadTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
                 if (bakedOverlay != null) {
@@ -195,7 +195,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
 
                     for (CTMLogic logic : CTMLogic.values()) {
                         CuboidFace overlayFace = new CuboidFace(cull, tintIndex, "", logic.remapUVs(relativeUvs), Quadrant.R0);
-                        regularQuads[corner][logic.ordinal()] = FaceBakery.bakeQuad(baker, overlayBounds[0], overlayBounds[1], overlayFace, logic.chooseMaterial(materials), face, state, null, true, emissivity);
+                        regularQuads[corner][logic.ordinal()] = FaceBakery.bakeQuad(baker, overlayBounds[0], overlayBounds[1], overlayFace, logic.chooseMaterial(materials), face, state, null, shade, emissivity);
                     }
                 }
             }
@@ -294,7 +294,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
     private BakedQuad bakeFace(ModelBaker baker, Vector3f[] bounds, Direction cull, Direction face, ModelState state, Material.Baked material, CuboidFace.UVs uvs) {
         CuboidFace cuboidFace = new CuboidFace(cull, tintIndex, "", uvs, Quadrant.R0);
 
-        return FaceBakery.bakeQuad(baker, bounds[0], bounds[1], cuboidFace, material, face, state, null, true, emissivity);
+        return FaceBakery.bakeQuad(baker, bounds[0], bounds[1], cuboidFace, material, face, state, null, shade, emissivity);
     }
 
     /**

@@ -35,8 +35,8 @@ import java.util.*;
 
 public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -125,7 +125,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
                     CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
                     Vector3f offsetFrom = new Vector3f(qFrom);
                     Vector3f offsetTo = new Vector3f(qTo);
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, offsetFrom, offsetTo, baseFace, baseForFace, face, state, null, true, baseEmissivity));
+                    baseQuadList.add(FaceBakery.bakeQuad(baker, offsetFrom, offsetTo, baseFace, baseForFace, face, state, null, shade, baseEmissivity));
                 }
             }
             if (!baseQuadList.isEmpty()) {
@@ -150,7 +150,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
                 for (CTMLogicHorizontal logic : CTMLogicHorizontal.values()) {
                     CuboidFace connFace = new CuboidFace(cull, tintIndex, "", logic.remapUVs(faceUvs), Quadrant.R0);
                     if (connFace.cullForDirection() == null) unculledFaces.add(face);
-                    quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, qFrom, qTo, connFace, bakedOverlayHorizontal, face, state, null, true, emissivity);
+                    quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, qFrom, qTo, connFace, bakedOverlayHorizontal, face, state, null, shade, emissivity);
                 }
                 horizontalQuads.put(face, quads);
             }
@@ -167,7 +167,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
                         CuboidFace.UVs remappedUVs = face.getAxis().isHorizontal() ? logic.remapUVs(faceUvs) : faceUvs;
                         CuboidFace connFace = new CuboidFace(cull, tintIndex, "", remappedUVs, Quadrant.R0);
                         if (connFace.cullForDirection() == null) unculledFaces.add(face);
-                        quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, bakedOverlayV, face, state, null, true, emissivity);
+                        quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, bakedOverlayV, face, state, null, shade, emissivity);
                     }
                     verticalQuads.put(face, quads);
                 }

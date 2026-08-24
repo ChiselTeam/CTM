@@ -36,8 +36,8 @@ import java.util.*;
 
 public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public MultiblockUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    public MultiblockUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     public MultiblockUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -101,7 +101,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
                         case WEST -> { bFrom.x += inset; bTo.x += inset; }
                         case EAST -> { bFrom.x -= inset; bTo.x -= inset; }
                     }
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, bFrom, bTo, baseFace, bakedBase, face, state, null, true, baseEmissivity));
+                    baseQuadList.add(FaceBakery.bakeQuad(baker, bFrom, bTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 } else {
                     // Default behavior: split base into 4 sub-quads for multiblock tiling
                     for (int c = 0; c < 4; c++) {
@@ -119,7 +119,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
 
                         CuboidFace.UVs qUvs = getRelativeUVs(face, qFrom, qTo);
                         CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
-                        baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, true, baseEmissivity));
+                        baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                     }
                 }
             }
@@ -157,7 +157,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
 
             CuboidFace faceDef = new CuboidFace(cull, tintIndex, "", remapped, Quadrant.R0);
             if (faceDef.cullForDirection() == null) unculled.add(face);
-            quads[i] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, baked, face, state, null, true, emissivity);
+            quads[i] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, baked, face, state, null, shade, emissivity);
         }
         dest.put(face, quads);
     }

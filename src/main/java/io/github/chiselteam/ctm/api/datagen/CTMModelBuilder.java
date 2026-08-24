@@ -45,6 +45,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private int baseEmissivity = 0;
     private int tintIndex = -1;
     private int emissivity = 0;
+    private boolean shade = true;
     private boolean eldritch = false;
     private boolean waterOffset = false;
     private CTMBlockPredicate connectionPredicate = CTMBlockPredicate.sameBlock();
@@ -209,6 +210,12 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return this;
     }
 
+    /** Controls directional diffuse shading for every generated quad. */
+    public CTMModelBuilder shade(boolean shade) {
+        this.shade = shade;
+        return this;
+    }
+
     public CTMModelBuilder eldritch(boolean eldritch) {
         this.eldritch = eldritch;
         return this;
@@ -250,6 +257,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         result.baseEmissivity = this.baseEmissivity;
         result.tintIndex = this.tintIndex;
         result.emissivity = this.emissivity;
+        result.shade = this.shade;
         result.eldritch = this.eldritch;
         result.waterOffset = this.waterOffset;
         result.connectionPredicate = this.connectionPredicate;
@@ -270,6 +278,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 baseEmissivity,
                 tintIndex,
                 emissivity,
+                shade,
                 eldritch,
                 connectionPredicate,
                 overlays,

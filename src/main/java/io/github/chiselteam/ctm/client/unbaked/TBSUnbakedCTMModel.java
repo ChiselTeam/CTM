@@ -33,8 +33,8 @@ import java.util.*;
 
 public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public TBSUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, eldritch, connectionPredicate, overlays, textureSlots);
+    public TBSUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     public TBSUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -158,7 +158,7 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
                     CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
                     Vector3f offsetFrom = new Vector3f(qFrom);
                     Vector3f offsetTo = new Vector3f(qTo);
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, offsetFrom, offsetTo, baseFace, bakedFaceBase, face, state, null, true, baseEmissivity));
+                    baseQuadList.add(FaceBakery.bakeQuad(baker, offsetFrom, offsetTo, baseFace, bakedFaceBase, face, state, null, shade, baseEmissivity));
                 }
 
                 if (bakedFaceOverlay != null && bakedFaceOverlayConnected != null) {
@@ -169,7 +169,7 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
                             unculledFaces.add(face);
                         }
                         connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1],
-                                connFace, logic.chooseMaterial(sprites), face, state, null, true, emissivity);
+                                connFace, logic.chooseMaterial(sprites), face, state, null, shade, emissivity);
                     }
                 }
             }

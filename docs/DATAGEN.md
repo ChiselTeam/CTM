@@ -146,7 +146,10 @@ builder.baseTintIndex(-1);
 builder.baseEmissivity(0);
 builder.tintIndex(-1);
 builder.emissivity(0);
+builder.shade(false);
 ```
+
+- `shade(value)`: Controls directional diffuse shading on every generated base and overlay quad. It defaults to `true` and is independent of the emissivity settings.
 
 ### Effects and offsets
 
