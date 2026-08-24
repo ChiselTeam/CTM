@@ -39,6 +39,16 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
     private final Map<Direction, BakedQuad[]> effectiveBaseQuads;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
+    public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> multiblock2x2Quads, Map<Direction, BakedQuad[]> multiblock3x3Quads, Map<Direction, BakedQuad[]> multiblock4x4Quads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads), ambientOcclusion);
+        this.multiblock2x2Quads = multiblock2x2Quads;
+        this.multiblock3x3Quads = multiblock3x3Quads;
+        this.multiblock4x4Quads = multiblock4x4Quads;
+        this.ruleQuads = ruleQuads;
+        this.selector = createSelector(variant.kind());
+        this.effectiveBaseQuads = computeEffectiveBaseQuads();
+    }
+
     public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces,
                                         Set<Direction> unculledFaces,
                                         boolean renderOverlayOnAllFaces,
@@ -136,6 +146,7 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
                 effectiveBaseQuads,
                 unculledFaces,
                 particleMaterial,
+                ambientOcclusion,
                 (side, faceQuads) -> {
                     if (shouldRenderMultiblockOverlay(side)) {
                         appendMultiblockQuad(key, side, faceQuads);

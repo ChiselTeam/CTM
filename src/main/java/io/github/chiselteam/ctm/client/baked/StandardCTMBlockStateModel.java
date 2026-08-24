@@ -28,6 +28,13 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     protected final StandardCTMOverlayTable overlayTable;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
+    public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, connectedQuads, ruleQuads), ambientOcclusion);
+        this.connectedQuads = connectedQuads;
+        this.overlayTable = new StandardCTMOverlayTable(connectedQuads);
+        this.ruleQuads = ruleQuads;
+    }
+
     public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
         super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, connectedQuads, ruleQuads));
         this.connectedQuads = connectedQuads;
@@ -83,6 +90,7 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
                 baseQuads,
                 unculledFaces,
                 particleMaterial,
+                ambientOcclusion,
                 (side, faceQuads) -> {
                     if (connectedFaces.contains(side) || renderOverlayOnAllFaces) {
                         appendConnectedQuads(key, side, faceQuads);

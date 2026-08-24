@@ -40,6 +40,16 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
     private final Map<Direction, BakedQuad[]> obscuredQuads;
     private final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
+    public EdgesCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> regularConnectedQuads, Map<Direction, BakedQuad[]> fullAtlasQuads, Map<Direction, BakedQuad[]> obscuredQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, ruleQuads), ambientOcclusion);
+        this.kind = variant.kind();
+        this.regularOverlayTable = new StandardCTMOverlayTable(regularConnectedQuads);
+        this.fullAtlasQuads = fullAtlasQuads;
+        this.obscuredQuads = obscuredQuads;
+        this.ruleQuads = ruleQuads;
+        if (!kind.isEdges() && !kind.isEdgesFull()) throw new IllegalArgumentException("EdgesCTMBlockStateModel requires EDGES or EDGES_FULL, got %s".formatted(kind));
+    }
+
     public EdgesCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces,
                                    boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads,
                                    Map<Direction, BakedQuad[][]> regularConnectedQuads,
@@ -79,6 +89,7 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
                 baseQuads,
                 unculledFaces,
                 particleMaterial,
+                ambientOcclusion,
                 (side, faceQuads) -> {
                     if (connectedFaces.contains(side) || renderOverlayOnAllFaces)
                         appendEdgesQuads(key, side, faceQuads);

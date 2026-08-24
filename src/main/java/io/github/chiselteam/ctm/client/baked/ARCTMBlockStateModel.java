@@ -23,6 +23,12 @@ import java.util.Set;
 
 public class ARCTMBlockStateModel extends AbstractConnectedTextureBlockStateModel<ARCTMKey> {
 
+    public ARCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, connectedQuads, ruleQuads), ambientOcclusion);
+        this.connectedQuads = connectedQuads;
+        this.ruleQuads = ruleQuads;
+    }
+
     protected final Map<Direction, BakedQuad[][]> connectedQuads;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
@@ -65,6 +71,7 @@ public class ARCTMBlockStateModel extends AbstractConnectedTextureBlockStateMode
                 baseQuads,
                 unculledFaces,
                 particleMaterial,
+                ambientOcclusion,
                 (side, faceQuads) -> {
                     appendConnectedQuads(key, side, faceQuads);
                     appendOverlayQuads(overlayMask, side, faceQuads);

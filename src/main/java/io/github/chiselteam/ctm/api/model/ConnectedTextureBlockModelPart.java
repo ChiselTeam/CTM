@@ -14,8 +14,13 @@ public record ConnectedTextureBlockModelPart(
         Map<Direction, List<BakedQuad>> quads,
         List<BakedQuad> unculledQuads,
         @BakedQuad.MaterialFlags int materialFlags,
-        Material.Baked particleMaterial
+        Material.Baked particleMaterial,
+        boolean ambientOcclusionEnabled
 ) implements BlockStateModelPart {
+
+    public ConnectedTextureBlockModelPart(Map<Direction, List<BakedQuad>> quads, List<BakedQuad> unculledQuads, @BakedQuad.MaterialFlags int materialFlags, Material.Baked particleMaterial) {
+        this(quads, unculledQuads, materialFlags, particleMaterial, true);
+    }
 
     @Override
     public @NonNull List<BakedQuad> getQuads(@Nullable Direction side) {
@@ -29,6 +34,6 @@ public record ConnectedTextureBlockModelPart(
 
     @Override
     public boolean useAmbientOcclusion() {
-        return true;
+        return ambientOcclusionEnabled;
     }
 }

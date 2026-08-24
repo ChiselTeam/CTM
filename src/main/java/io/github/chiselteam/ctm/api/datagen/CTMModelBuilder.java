@@ -46,6 +46,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private int tintIndex = -1;
     private int emissivity = 0;
     private boolean shade = true;
+    private boolean ambientOcclusion = true;
     private boolean eldritch = false;
     private boolean waterOffset = false;
     private CTMBlockPredicate connectionPredicate = CTMBlockPredicate.sameBlock();
@@ -216,6 +217,11 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return this;
     }
 
+    public CTMModelBuilder ambientOcclusion(boolean ambientOcclusion) {
+        this.ambientOcclusion = ambientOcclusion;
+        return this;
+    }
+
     public CTMModelBuilder eldritch(boolean eldritch) {
         this.eldritch = eldritch;
         return this;
@@ -258,6 +264,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         result.tintIndex = this.tintIndex;
         result.emissivity = this.emissivity;
         result.shade = this.shade;
+        result.ambientOcclusion = this.ambientOcclusion;
         result.eldritch = this.eldritch;
         result.waterOffset = this.waterOffset;
         result.connectionPredicate = this.connectionPredicate;
@@ -279,6 +286,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 tintIndex,
                 emissivity,
                 shade,
+                ambientOcclusion,
                 eldritch,
                 connectionPredicate,
                 overlays,

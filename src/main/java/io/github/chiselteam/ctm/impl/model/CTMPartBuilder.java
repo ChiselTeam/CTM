@@ -13,6 +13,10 @@ public final class CTMPartBuilder {
     private CTMPartBuilder() {}
 
     public static ConnectedTextureBlockModelPart create(Map<Direction, BakedQuad[]> bakedQuads, Set<Direction> unculledFaces, Material.Baked particleMaterial, FaceQuadAppender appender) {
+        return create(bakedQuads, unculledFaces, particleMaterial, true, appender);
+    }
+
+    public static ConnectedTextureBlockModelPart create(Map<Direction, BakedQuad[]> bakedQuads, Set<Direction> unculledFaces, Material.Baked particleMaterial, boolean ambientOcclusion, FaceQuadAppender appender) {
         Map<Direction, List<BakedQuad>> quadsMap = new EnumMap<>(Direction.class);
         List<BakedQuad> unculled = new ArrayList<>();
         int flags = 0;
@@ -34,7 +38,7 @@ public final class CTMPartBuilder {
             }
         }
 
-        return new ConnectedTextureBlockModelPart(quadsMap, List.copyOf(unculled), flags, particleMaterial);
+        return new ConnectedTextureBlockModelPart(quadsMap, List.copyOf(unculled), flags, particleMaterial, ambientOcclusion);
     }
 
     public static void appendIndexedQuad(BakedQuad[] quads, int index, List<BakedQuad> faceQuads) {

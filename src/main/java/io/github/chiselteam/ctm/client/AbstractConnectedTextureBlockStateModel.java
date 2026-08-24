@@ -36,12 +36,13 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     protected final Material.Baked particleMaterial;
     protected final CTMBlockPredicate connectionPredicate;
     protected final List<CTMOverlayRule> overlayRules;
+    protected final boolean ambientOcclusion;
 
     private final Map<Object, ConnectedTextureBlockModelPart> parts = new ConcurrentHashMap<>();
 
     protected final int materialFlags;
 
-    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, int materialFlags) {
+    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, int materialFlags, boolean ambientOcclusion) {
         this.connectedFaces = connectedFaces;
         this.unculledFaces = unculledFaces;
         this.renderOverlayOnAllFaces = renderOverlayOnAllFaces;
@@ -52,10 +53,15 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
         this.connectionPredicate = connectionPredicate;
         this.overlayRules = overlayRules;
         this.materialFlags = materialFlags;
+        this.ambientOcclusion = ambientOcclusion;
+    }
+
+    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, int materialFlags) {
+        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, materialFlags, true);
     }
 
     protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules) {
-        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeFlags(baseQuads));
+        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeFlags(baseQuads), true);
     }
 
     private static int computeFlags(Map<Direction, BakedQuad[]> baseQuads) {

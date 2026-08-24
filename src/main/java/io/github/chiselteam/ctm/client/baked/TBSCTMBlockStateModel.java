@@ -13,6 +13,10 @@ import java.util.Set;
 
 public class TBSCTMBlockStateModel extends StandardCTMBlockStateModel {
 
+    public TBSCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, particle, variant, connectionPredicate, overlayRules, ruleQuads, ambientOcclusion);
+    }
+
     public TBSCTMBlockStateModel(
             Set<Direction> connectedFaces,
             Set<Direction> unculledFaces,
