@@ -46,7 +46,9 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
         this.modelLocation = modelLocation;
         this.element = element;
-        this.connectedFaces = Set.copyOf(connectedFaces);
+        EnumSet<Direction> copiedConnectedFaces = EnumSet.noneOf(Direction.class);
+        copiedConnectedFaces.addAll(connectedFaces);
+        this.connectedFaces = Collections.unmodifiableSet(copiedConnectedFaces);
         this.renderOverlayOnAllFaces = renderOverlayOnAllFaces;
         this.variant = variant;
         this.baseTintIndex = baseTintIndex;
