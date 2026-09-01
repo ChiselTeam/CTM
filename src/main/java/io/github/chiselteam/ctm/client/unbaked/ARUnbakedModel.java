@@ -1,18 +1,18 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
-import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
-import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import io.github.chiselteam.ctm.api.model.CTMVariant;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
 import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.ARCTMBlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
-import net.minecraft.client.renderer.block.dispatch.Variant.SimpleModelState;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
@@ -32,6 +32,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    }
 
     public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
@@ -53,7 +57,7 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
     @Override
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
         ResolvedModel model = baker.getModel(modelLocation);
-        ModelState state = SimpleModelState.DEFAULT.asModelState();
+        ModelState state = modelState.asModelState();
         Transformation rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
         if (!rootTransform.isIdentity()) {
             state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
@@ -148,6 +152,6 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         }
 
         List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
-        return new ARCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state), ambientOcclusion);
+        return new ARCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, model, from, to, state)), ambientOcclusion);
     }
 }

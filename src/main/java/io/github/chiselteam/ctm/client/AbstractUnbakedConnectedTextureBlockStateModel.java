@@ -1,22 +1,23 @@
 package io.github.chiselteam.ctm.client;
 
+import com.mojang.datafixers.util.Pair;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import com.mojang.datafixers.util.Pair;
 import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.client.resources.model.ResolvedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.minecraft.client.resources.model.UnbakedModel;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
@@ -40,11 +41,12 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     protected final CTMBlockPredicate connectionPredicate;
     protected final List<CTMModelCodecs.UnbakedOverlayRule> overlays;
     protected final Map<String, Identifier> textureSlots;
+    protected final Variant.SimpleModelState modelState;
 
-    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
         this.modelLocation = modelLocation;
         this.element = element;
-        this.connectedFaces = connectedFaces;
+        this.connectedFaces = Set.copyOf(connectedFaces);
         this.renderOverlayOnAllFaces = renderOverlayOnAllFaces;
         this.variant = variant;
         this.baseTintIndex = baseTintIndex;
@@ -55,8 +57,13 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         this.ambientOcclusion = ambientOcclusion;
         this.eldritch = eldritch;
         this.connectionPredicate = connectionPredicate;
-        this.overlays = overlays;
-        this.textureSlots = textureSlots;
+        this.overlays = List.copyOf(overlays);
+        this.textureSlots = Map.copyOf(textureSlots);
+        this.modelState = modelState;
+    }
+
+    protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        this(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, Variant.SimpleModelState.DEFAULT);
     }
 
     protected AbstractUnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
@@ -131,6 +138,36 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
             ruleQuads.put(rule, quads);
         }
         return ruleQuads;
+    }
+
+    /** Rekeys face-indexed data to the direction produced by the baked model transformation. */
+    protected <T> Map<Direction, T> remapQuadDirections(Map<Direction, T> quads) {
+        if (modelState.equals(Variant.SimpleModelState.DEFAULT)) return quads;
+        Map<Direction, T> remapped = new EnumMap<>(Direction.class);
+        quads.forEach((source, value) -> remapped.put(bakedDirection(source, value), value));
+        return remapped;
+    }
+
+    protected Set<Direction> remapDirections(Set<Direction> directions, Map<Direction, ? extends Object> bakedFaces) {
+        if (modelState.equals(Variant.SimpleModelState.DEFAULT)) return directions;
+        Set<Direction> remapped = EnumSet.noneOf(Direction.class);
+        for (Direction direction : directions) {
+            Object value = bakedFaces.get(direction);
+            remapped.add(bakedDirection(direction, value));
+        }
+        return remapped;
+    }
+
+    protected Map<CTMOverlayRule, Map<Direction, BakedQuad>> remapRuleQuadDirections(Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
+        ruleQuads.replaceAll((_, quads) -> remapQuadDirections(quads));
+        return ruleQuads;
+    }
+
+    private Direction bakedDirection(Direction fallback, Object value) {
+        BakedQuad quad = value instanceof BakedQuad q ? q
+                : value instanceof BakedQuad[] array ? Arrays.stream(array).filter(Objects::nonNull).findFirst().orElse(null)
+                : null;
+        return quad != null && quad.direction() != null ? quad.direction() : fallback;
     }
 
     protected Direction getCullface(Direction direction, Vector3f from, Vector3f to) {

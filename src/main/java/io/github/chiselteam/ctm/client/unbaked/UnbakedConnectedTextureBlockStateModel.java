@@ -1,16 +1,18 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
-import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import io.github.chiselteam.ctm.api.strategy.CTMKind;
-import io.github.chiselteam.ctm.api.model.CTMVariant;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.EldritchBlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.Variant;
+import net.minecraft.client.renderer.block.dispatch.VariantMutator;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -23,6 +25,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    }
 
     public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
@@ -68,10 +74,25 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
                     Codec.BOOL.optionalFieldOf("eldritch", false).forGetter(m -> m.eldritch),
                     CTMModelCodecs.CONNECTS_TO_CODEC.optionalFieldOf("connects_to", CTMBlockPredicate.sameBlock()).forGetter(m -> m.connectionPredicate),
                     CTMModelCodecs.OVERLAY_RULE_CODEC.listOf().optionalFieldOf("overlays", List.of()).forGetter(m -> m.overlays),
-                    Codec.unboundedMap(Codec.STRING, Identifier.CODEC).optionalFieldOf("texture_slots", Map.of()).forGetter(m -> m.textureSlots)
-            ).apply(instance, (Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, Boolean renderOverlayOnAllFaces, CTMVariant variant, Integer baseTintIndex, Integer baseEmissivity, Integer tintIndex, Integer emissivity, Boolean shade, Boolean ambientOcclusion, Boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) ->
-                    new UnbakedConnectedTextureBlockStateModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots))
+                    Codec.unboundedMap(Codec.STRING, Identifier.CODEC).optionalFieldOf("texture_slots", Map.of()).forGetter(m -> m.textureSlots),
+                    Variant.SimpleModelState.MAP_CODEC.forGetter(m -> m.modelState)
+            ).apply(instance, UnbakedConnectedTextureBlockStateModel::new)
     );
+
+    public UnbakedConnectedTextureBlockStateModel with(VariantMutator mutator) {
+        Variant transformed = mutator.apply(new Variant(modelLocation, modelState));
+        return new UnbakedConnectedTextureBlockStateModel(transformed.modelLocation(), element, connectedFaces,
+                renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade,
+                ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, transformed.modelState());
+    }
+
+    public Variant.SimpleModelState modelState() {
+        return modelState;
+    }
+
+    public Identifier modelLocation() {
+        return modelLocation;
+    }
 
     @Override
     public @NonNull MapCodec<? extends CustomUnbakedBlockStateModel> codec() {
@@ -86,14 +107,14 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
 
     private AbstractUnbakedConnectedTextureBlockStateModel forKind(CTMKind kind) {
         return switch (kind) {
-            case STANDARD -> new StandardUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
-            case TBS -> new TBSUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
-            case AR -> new ARUnbakedModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
-            case BOOKSHELF, CTMH, CTMV -> new DirectionalUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
-            case EDGES, EDGES_FULL -> new EdgesUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
+            case STANDARD -> new StandardUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+            case TBS -> new TBSUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+            case AR -> new ARUnbakedModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+            case BOOKSHELF, CTMH, CTMV -> new DirectionalUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+            case EDGES, EDGES_FULL -> new EdgesUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
             case MULTIBLOCK_2X2, MULTIBLOCK_3X3, MULTIBLOCK_4X4,
                  V4, V9, V16,
-                 R4, R9, R16 -> new MultiblockUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
+                 R4, R9, R16 -> new MultiblockUnbakedCTMModel(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
         };
     }
 }

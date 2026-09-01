@@ -12,7 +12,7 @@ import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockState
 import io.github.chiselteam.ctm.client.baked.EdgesCTMBlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
-import net.minecraft.client.renderer.block.dispatch.Variant.SimpleModelState;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
@@ -28,14 +28,13 @@ import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public EdgesUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    }
 
     public EdgesUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
@@ -54,7 +53,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
         ResolvedModel model = baker.getModel(modelLocation);
 
-        ModelState state = SimpleModelState.DEFAULT.asModelState();
+        ModelState state = modelState.asModelState();
 
         Transformation rootTransform = model.getTopAdditionalProperties()
                 .getOrDefault(
@@ -256,7 +255,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
 
         List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
 
-        return new EdgesCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state), ambientOcclusion);
+        return new EdgesCTMBlockStateModel(remapDirections(connectedFaces, fullAtlasQuads), remapDirections(unculledFaces, fullAtlasQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(regularConnectedQuads), remapQuadDirections(fullAtlasQuads), remapQuadDirections(obscuredQuads), bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, model, from, to, state)), ambientOcclusion);
     }
 
 

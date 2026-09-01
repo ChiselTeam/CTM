@@ -41,13 +41,15 @@ public final class LayeredCTMModelBuilder extends CustomBlockStateModelBuilder {
 
     @Override
     public @NonNull LayeredCTMModelBuilder with(@NonNull VariantMutator variantMutator) {
-        return this;
+        LayeredCTMModelBuilder result = create();
+        layers.stream().map(layer -> layer.with(variantMutator)).forEach(result.layers::add);
+        return result;
     }
 
     @Override
     public @NonNull LayeredCTMModelBuilder with(@NonNull UnbakedMutator unbakedMutator) {
         LayeredCTMModelBuilder result = create();
-        result.layers.addAll(layers);
+        layers.stream().map(layer -> layer.with(unbakedMutator)).forEach(result.layers::add);
         return result;
     }
 

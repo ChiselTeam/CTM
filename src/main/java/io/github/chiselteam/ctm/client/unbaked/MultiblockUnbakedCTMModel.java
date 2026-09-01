@@ -1,21 +1,17 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
-import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
-import io.github.chiselteam.ctm.api.model.CTMVariant;
-import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic4x4;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic2x2;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic3x3;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
 import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.*;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.MultiblockCTMBlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
-import net.minecraft.client.renderer.block.dispatch.Variant.SimpleModelState;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
@@ -35,6 +31,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public MultiblockUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    }
 
     public MultiblockUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
@@ -56,7 +56,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
     @Override
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
         ResolvedModel model = baker.getModel(modelLocation);
-        ModelState state = SimpleModelState.DEFAULT.asModelState();
+        ModelState state = modelState.asModelState();
         Transformation rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
         if (!rootTransform.isIdentity()) {
             state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
@@ -140,7 +140,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
         }
 
         List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
-        return new MultiblockCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, mb2x2Quads, mb3x3Quads, mb4x4Quads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state), ambientOcclusion);
+        return new MultiblockCTMBlockStateModel(remapDirections(connectedFaces, mb2x2Quads), remapDirections(unculledFaces, mb2x2Quads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(mb2x2Quads), remapQuadDirections(mb3x3Quads), remapQuadDirections(mb4x4Quads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, model, from, to, state)), ambientOcclusion);
     }
 
     private void bakeMultiblock(ModelBaker baker, ResolvedModel model, String textureKey, Direction face, Direction cull, ModelState state, CuboidFace.UVs uvs, Map<Direction, BakedQuad[]> dest, Set<Direction> unculled, Enum<?>[] values, int emissivity, int tintIndex, Vector3f[] offsets) {

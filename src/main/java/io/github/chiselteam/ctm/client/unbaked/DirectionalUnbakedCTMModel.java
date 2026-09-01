@@ -1,27 +1,26 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
-import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
-import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import io.github.chiselteam.ctm.api.strategy.CTMLogic;
-import io.github.chiselteam.ctm.api.model.CTMVariant;
-import io.github.chiselteam.ctm.api.strategy.CTMLogicHorizontal;
-import io.github.chiselteam.ctm.api.strategy.CTMLogicVertical;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
 import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
+import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
+import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMLogic;
+import io.github.chiselteam.ctm.api.strategy.CTMLogicHorizontal;
+import io.github.chiselteam.ctm.api.strategy.CTMLogicVertical;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.DirectionalCTMBlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
-import net.minecraft.client.renderer.block.dispatch.Variant.SimpleModelState;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
@@ -34,6 +33,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStateModel {
+
+    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    }
 
     public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
@@ -55,7 +58,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
     @Override
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
         ResolvedModel model = baker.getModel(modelLocation);
-        ModelState state = SimpleModelState.DEFAULT.asModelState();
+        ModelState state = modelState.asModelState();
         Transformation rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
         if (!rootTransform.isIdentity()) {
             state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
@@ -179,6 +182,20 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
         }
 
         List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
-        return new DirectionalCTMBlockStateModel(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, horizontalQuads, verticalQuads, bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, bakeOverlayQuads(baker, bakedOverlays, model, from, to, state), ambientOcclusion);
+        Map<Direction, BakedQuad> directionSource = new EnumMap<>(Direction.class);
+        for (Map.Entry<Direction, BakedQuad[]> entry : verticalQuads.entrySet()) {
+            directionSource.put(entry.getKey(), entry.getValue()[0]);
+        }
+        if (directionSource.isEmpty()) {
+            for (Map.Entry<Direction, BakedQuad[]> entry : baseQuads.entrySet()) directionSource.put(entry.getKey(), entry.getValue()[0]);
+        }
+        Set<Direction> bakedConnectedFaces = remapDirections(connectedFaces, directionSource);
+        Set<Direction> bakedUnculledFaces = remapDirections(unculledFaces, directionSource);
+        Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads = bakeOverlayQuads(baker, bakedOverlays, model, from, to, state);
+        ruleQuads.replaceAll((_, quads) -> remapQuadDirections(quads));
+        return new DirectionalCTMBlockStateModel(bakedConnectedFaces, bakedUnculledFaces, renderOverlayOnAllFaces,
+                remapQuadDirections(baseQuads), remapQuadDirections(horizontalQuads), remapQuadDirections(verticalQuads),
+                bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays,
+                ruleQuads, ambientOcclusion);
     }
 }

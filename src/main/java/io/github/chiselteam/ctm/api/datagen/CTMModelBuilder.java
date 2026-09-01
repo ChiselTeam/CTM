@@ -1,11 +1,12 @@
 package io.github.chiselteam.ctm.api.datagen;
 
+import com.mojang.datafixers.util.Pair;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
-import com.mojang.datafixers.util.Pair;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.block.dispatch.VariantMutator;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -15,11 +16,7 @@ import net.neoforged.neoforge.client.model.generators.blockstate.UnbakedMutator;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Datagen-side builder for {@link UnbakedConnectedTextureBlockStateModel}s.
@@ -52,6 +49,8 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private CTMBlockPredicate connectionPredicate = CTMBlockPredicate.sameBlock();
     private final List<CTMModelCodecs.UnbakedOverlayRule> overlays = new ArrayList<>();
     private final Map<String, Identifier> textureSlots = new HashMap<>();
+    private Variant.SimpleModelState modelState = Variant.SimpleModelState.DEFAULT;
+    private final List<UnbakedMutator> unbakedMutators = new ArrayList<>();
 
     protected CTMModelBuilder(Block block, CTMKind kind) {
         this.block = block;
@@ -249,11 +248,21 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
 
     @Override
     public @NonNull CTMModelBuilder with(@NonNull VariantMutator variantMutator) {
-        return this;
+        CTMModelBuilder result = copy();
+        Variant transformed = variantMutator.apply(new Variant(modelLocation, modelState));
+        result.modelLocation = transformed.modelLocation();
+        result.modelState = transformed.modelState();
+        return result;
     }
 
     @Override
     public @NonNull CTMModelBuilder with(@NonNull UnbakedMutator unbakedMutator) {
+        CTMModelBuilder result = copy();
+        result.unbakedMutators.add(unbakedMutator);
+        return result;
+    }
+
+    private CTMModelBuilder copy() {
         CTMModelBuilder result = new CTMModelBuilder(this.block, this.kind);
         result.modelLocation = this.modelLocation;
         result.element = this.element;
@@ -270,12 +279,14 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         result.connectionPredicate = this.connectionPredicate;
         result.overlays.addAll(this.overlays);
         result.textureSlots.putAll(this.textureSlots);
+        result.modelState = this.modelState;
+        result.unbakedMutators.addAll(this.unbakedMutators);
         return result;
     }
 
     @Override
     public @NonNull UnbakedConnectedTextureBlockStateModel toUnbaked() {
-        return new UnbakedConnectedTextureBlockStateModel(
+        UnbakedConnectedTextureBlockStateModel model = new UnbakedConnectedTextureBlockStateModel(
                 modelLocation,
                 element,
                 connectedFaces,
@@ -290,7 +301,12 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 eldritch,
                 connectionPredicate,
                 overlays,
-                textureSlots
+                textureSlots,
+                modelState
         );
+        for (UnbakedMutator mutator : unbakedMutators) {
+            model = mutator.apply(model);
+        }
+        return model;
     }
 }
