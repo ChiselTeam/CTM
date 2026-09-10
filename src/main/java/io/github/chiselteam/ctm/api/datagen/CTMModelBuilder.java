@@ -4,8 +4,10 @@ import com.mojang.datafixers.util.Pair;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
 import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
+import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.block.dispatch.VariantMutator;
 import net.minecraft.core.Direction;
@@ -246,10 +248,35 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return this;
     }
 
+    public CTMModelBuilder texture(TextureSlot slot, Identifier texture) {
+        return texture(slot.getId(), texture);
+    };
+
+    public CTMModelBuilder standardTextures(Identifier none, Identifier cornerless, Identifier vertical, Identifier horizontal, Identifier corner) {
+        return texture(CTMTextureKeys.STANDARD_NONE, none)
+                .texture(CTMTextureKeys.STANDARD_CORNERLESS, cornerless)
+                .texture(CTMTextureKeys.STANDARD_VERTICAL, vertical)
+                .texture(CTMTextureKeys.STANDARD_HORIZONTAL, horizontal)
+                .texture(CTMTextureKeys.STANDARD_CORNER, corner);
+    }
+
+    public CTMModelBuilder standardTextures(Identifier base) {
+        var namespace = base.getNamespace();
+        var path = base.getPath();
+
+        return standardTextures(
+                Identifier.fromNamespaceAndPath(namespace, "%s_none".formatted(path)),
+                Identifier.fromNamespaceAndPath(namespace, "%s_cornerless".formatted(path)),
+                Identifier.fromNamespaceAndPath(namespace, "%s_vertical".formatted(path)),
+                Identifier.fromNamespaceAndPath(namespace, "%s_horizontal".formatted(path)),
+                Identifier.fromNamespaceAndPath(namespace, "%s_corner".formatted(path))
+        );
+    }
+
     @Override
     public @NonNull CTMModelBuilder with(@NonNull VariantMutator variantMutator) {
-        CTMModelBuilder result = copy();
-        Variant transformed = variantMutator.apply(new Variant(modelLocation, modelState));
+        var result = copy();
+        var transformed = variantMutator.apply(new Variant(modelLocation, modelState));
         result.modelLocation = transformed.modelLocation();
         result.modelState = transformed.modelState();
         return result;
@@ -257,13 +284,13 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
 
     @Override
     public @NonNull CTMModelBuilder with(@NonNull UnbakedMutator unbakedMutator) {
-        CTMModelBuilder result = copy();
+        var result = copy();
         result.unbakedMutators.add(unbakedMutator);
         return result;
     }
 
     private CTMModelBuilder copy() {
-        CTMModelBuilder result = new CTMModelBuilder(this.block, this.kind);
+        var result = new CTMModelBuilder(this.block, this.kind);
         result.modelLocation = this.modelLocation;
         result.element = this.element;
         result.connectedFaces.addAll(this.connectedFaces);
@@ -286,7 +313,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
 
     @Override
     public @NonNull UnbakedConnectedTextureBlockStateModel toUnbaked() {
-        UnbakedConnectedTextureBlockStateModel model = new UnbakedConnectedTextureBlockStateModel(
+        var model = new UnbakedConnectedTextureBlockStateModel(
                 modelLocation,
                 element,
                 connectedFaces,
@@ -304,7 +331,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 textureSlots,
                 modelState
         );
-        for (UnbakedMutator mutator : unbakedMutators) {
+        for (var mutator : unbakedMutators) {
             model = mutator.apply(model);
         }
         return model;

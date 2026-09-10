@@ -4,12 +4,13 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
 import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
-import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.StandardCTMBlockStateModel;
+import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.block.dispatch.Variant;
@@ -20,7 +21,6 @@ import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import net.neoforged.neoforge.client.model.UnbakedElementsHelper;
@@ -58,90 +58,109 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         ResolvedModel model = baker.getModel(modelLocation);
         ModelState state = modelState.asModelState();
         Transformation rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
-        if (!rootTransform.isIdentity()) {
-            state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
+        if (!rootTransform.isIdentity()) state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
+
+        var bakedBase = bakeMaterial(baker, getMaterial(model, CTMTextureKeys.BASE), model);
+        var bakedParticle = bakeMaterial(baker, getMaterial(model, CTMTextureKeys.PARTICLE), model);
+
+        var standardTextures = bakeStandardTextureSet(baker, model);
+        boolean useStandaloneTextures = standardTextures.isComplete();
+
+        @Deprecated(forRemoval = true, since = "26.1")
+        Material.Baked bakedOverlay = null;
+
+        @Deprecated(forRemoval = true, since = "26.1")
+        Material.Baked bakedOverlayConnected = null;
+
+        if(!useStandaloneTextures) {
+            bakedOverlay = bakeMaterial(baker, getMaterial(model, "overlay_texture"), model);
+            bakedOverlayConnected = bakeMaterial(baker, getMaterial(model, "overlay_connected"), model);
         }
 
-        Material baseMaterial = getMaterial(model, "base_texture");
-        Material overlayMaterial = getMaterial(model, "overlay_texture");
-        Material overlayConnectedMaterial = getMaterial(model, "overlay_connected");
-        Material particleMaterial = getMaterial(model, "particle");
-
-        Material layer0Material = getMaterial(model, "layer0");
-        Material layer1Material = getMaterial(model, "layer1");
-
-        Material.Baked bakedBase = bakeMaterial(baker, baseMaterial, model);
-        Material.Baked bakedOverlay = bakeMaterial(baker, overlayMaterial, model);
-        Material.Baked bakedOverlayConnected = bakeMaterial(baker, overlayConnectedMaterial, model);
-
-        if (bakedOverlay == null) {
-            bakedOverlay = bakedOverlayConnected;
-        }
-        if (bakedOverlayConnected == null) {
-            bakedOverlayConnected = bakedOverlay;
-        }
-
-        Material.Baked bakedParticle = bakeMaterial(baker, particleMaterial, model);
         if (bakedParticle == null) {
-            bakedParticle = (bakedBase != null ? bakedBase : bakedOverlay);
+            if (bakedBase != null) bakedParticle = bakedBase;
+            else if (useStandaloneTextures) bakedParticle = standardTextures.get(CTMLogic.NONE);
+            else bakedParticle = bakedOverlay;
         }
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[][]> connectedQuads = new EnumMap<>(Direction.class);
         Set<Direction> unculledFaces = new HashSet<>();
 
-        Vector3f from = element.getFirst();
-        Vector3f to = element.getSecond();
+        var from = element.getFirst();
+        var to = element.getSecond();
         int center = 8;
 
-        for (Direction face : Direction.values()) {
-            Direction cull = getCullface(face, from, to);
-            Direction[] planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
+        for (var face : Direction.values()) {
+            var cull = getCullface(face, from, to);
+            var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
 
-            List<BakedQuad> baseQuadList = new ArrayList<>();
-            BakedQuad[][] connQuads = new BakedQuad[4][CTMLogic.values().length];
+            var baseQuadList = new ArrayList<BakedQuad>();
+            var connQuads = new BakedQuad[4][CTMLogic.values().length];
 
             for (int c = 0; c < 4; c++) {
-                Vec3i corner = face.getUnitVec3i().offset(planeDirections[c].getUnitVec3i()).offset(planeDirections[(c + 1) % 4].getUnitVec3i()).offset(1, 1, 1).multiply(8);
+                var corner = face.getUnitVec3i().offset(planeDirections[c].getUnitVec3i()).offset(planeDirections[(c + 1) % 4].getUnitVec3i()).offset(1, 1, 1).multiply(8);
 
-                Vector3f qFrom = new Vector3f(
+                var qFrom = new Vector3f(
                         Math.clamp(Math.min(center - (16 - to.x()), (float) corner.getX() + from.x()), 0, 16),
                         Math.clamp(Math.min(center - (16 - to.y()), (float) corner.getY() + from.y()), 0, 16),
                         Math.clamp(Math.min(center - (16 - to.z()), (float) corner.getZ() + from.z()), 0, 16)
                 );
-                Vector3f qTo = new Vector3f(
+
+                var qTo = new Vector3f(
                         to.x() < center ? to.x() : Math.max(center, (float) corner.getX() - (16 - to.x())),
                         to.y() < center ? to.y() : Math.max(center, (float) corner.getY() - (16 - to.y())),
                         to.z() < center ? to.z() : Math.max(center, (float) corner.getZ() - (16 - to.z()))
                 );
 
-                CuboidFace.UVs qUvs = getRelativeUVs(face, qFrom, qTo);
+                var qUvs = getRelativeUVs(face, qFrom, qTo);
 
                 if (bakedBase != null) {
-                    CuboidFace baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
+                    var baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
                     baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
-                if (bakedOverlay != null && bakedOverlayConnected != null) {
-                    Material.Baked[] sprites = {bakedOverlay, bakedOverlayConnected};
-                    for (CTMLogic logic : CTMLogic.values()) {
-                        CuboidFace connFace = new CuboidFace(cull, tintIndex, "", logic.remapUVs(qUvs), Quadrant.R0);
-                        if (connFace.cullForDirection() == null) {
-                            unculledFaces.add(face);
-                        }
-                        connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, qFrom, qTo,
-                                connFace, logic.chooseMaterial(sprites), face, state, null, shade, emissivity);
-                    }
+                if(useStandaloneTextures) {
+                    bakeStandaloneConnectedQuads(baker, state, face, cull, qFrom, qTo, qUvs, standardTextures, connQuads[c], unculledFaces);
+                } else {
+                    bakeLegacyConnectedQuads(baker, state, face, cull, qFrom, qTo, qUvs, bakedOverlay, bakedOverlayConnected, connQuads[c], unculledFaces);
                 }
             }
 
-            if (!baseQuadList.isEmpty()) {
-                baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
-            }
+            if (!baseQuadList.isEmpty()) baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
             connectedQuads.put(face, connQuads);
         }
 
-        List<CTMOverlayRule> bakedOverlays = bakeOverlays(model);
+        var bakedOverlays = bakeOverlays(model);
         return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, model, from, to, state)), ambientOcclusion);
+    }
+
+    private CTMTextureSet<CTMLogic> bakeStandardTextureSet(ModelBaker baker, ResolvedModel model) {
+        var textures = new CTMTextureSet<>(CTMLogic.class);
+        for(var logic : CTMLogic.values()) {
+            var material = getMaterial(model, logic.getStandardTextureSlot());
+            textures.put(logic, bakeMaterial(baker, material, model));
+        }
+        return textures;
+    }
+
+    private void bakeStandaloneConnectedQuads(ModelBaker baker, ModelState state, Direction face, Direction cull, Vector3f from, Vector3f to, CuboidFace.UVs uvs, CTMTextureSet<CTMLogic> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
+        for(var logic : CTMLogic.values()) {
+            var material = textures.get(logic);
+            if(material == null) return;
+
+            var connFace = new CuboidFace(cull, tintIndex, "", uvs, Quadrant.R0);
+            if(connFace.cullForDirection() == null) unculledFaces.add(face);
+            connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, from, to, connFace, material, face, state, null, shade, emissivity);
+        }
+    }
+
+    private void bakeLegacyConnectedQuads(ModelBaker baker, ModelState state, Direction face, Direction cull, Vector3f from, Vector3f to, CuboidFace.UVs uvs, Material.Baked bakedOverlay, Material.Baked bakedOverlayConnected, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
+        var sprites = new Material.Baked[]{bakedOverlay, bakedOverlayConnected};
+        for(var logic : CTMLogic.values()) {
+            var connFace = new CuboidFace(cull, tintIndex, "", logic.remapUVs(uvs), Quadrant.R0);
+            if(connFace.cullForDirection() == null) unculledFaces.add(face);
+            connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, from, to, connFace, logic.chooseMaterial(sprites), face, state, null, shade, emissivity);
+        }
     }
 }

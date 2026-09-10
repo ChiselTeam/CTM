@@ -18,7 +18,24 @@ public final class CTMModelTemplates {
     /**
      * Standard CTM template: base texture and connected overlay.
      */
-    public static final ModelTemplate STANDARD = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_CONNECTED);
+    public static final ModelTemplate STANDARD = template(
+            CTM_LOADER,
+            TextureSlot.PARTICLE,
+            CTMTextureSlots.BASE,
+            CTMTextureSlots.STANDARD_NONE,
+            CTMTextureSlots.STANDARD_CORNERLESS,
+            CTMTextureSlots.STANDARD_VERTICAL,
+            CTMTextureSlots.STANDARD_HORIZONTAL,
+            CTMTextureSlots.STANDARD_CORNER
+    );
+
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate STANDARD_LEGACY = template(
+            CTM_LOADER,
+            TextureSlot.PARTICLE,
+            CTMTextureSlots.BASE,
+            CTMTextureSlots.OVERLAY_CONNECTED
+    );
 
     /**
      * TBS CTM template: top/bottom/side textures and connected overlay.

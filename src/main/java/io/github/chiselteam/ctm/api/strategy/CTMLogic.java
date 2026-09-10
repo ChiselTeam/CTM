@@ -1,6 +1,7 @@
 package io.github.chiselteam.ctm.api.strategy;
 
 import com.mojang.serialization.Codec;
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
@@ -10,14 +11,18 @@ import org.jspecify.annotations.NonNull;
 import static net.minecraft.core.Direction.*;
 
 public enum CTMLogic implements StringRepresentable {
-
     NONE(0, 0, 0, 16, 16),
     CORNERLESS(1, 0, 0, 8, 8),
     VERTICAL(1, 0, 8, 8, 16),
     HORIZONTAL(1, 8, 0, 16, 8),
     CORNER(1, 8, 8, 16, 16);
 
+    public static final Codec<CTMLogic> CODEC = StringRepresentable.fromEnum(CTMLogic::values);
+
+    @Deprecated(forRemoval = true, since = "26.1")
     private final int texture;
+
+    @Deprecated(forRemoval = true, since = "26.1")
     private final int u0, v0, u1, v1;
 
     public static final Direction[][] AXIS_PLANE_DIRECTIONS = {
@@ -34,6 +39,16 @@ public enum CTMLogic implements StringRepresentable {
         this.v1 = v1;
     }
 
+    public String getStandardTextureSlot() {
+        return switch(this) {
+            case NONE -> CTMTextureKeys.STANDARD_NONE;
+            case CORNERLESS -> CTMTextureKeys.STANDARD_CORNERLESS;
+            case VERTICAL -> CTMTextureKeys.STANDARD_VERTICAL;
+            case HORIZONTAL -> CTMTextureKeys.STANDARD_HORIZONTAL;
+            case CORNER -> CTMTextureKeys.STANDARD_CORNER;
+        };
+    }
+
     public static CTMLogic of(boolean horizontal, boolean vertical, boolean corner) {
         if (corner) {
             return CORNERLESS;
@@ -44,10 +59,12 @@ public enum CTMLogic implements StringRepresentable {
         }
     }
 
+    @Deprecated(forRemoval = true, since = "26.1")
     public Material.Baked chooseMaterial(Material.Baked[] textures) {
         return textures[texture];
     }
 
+    @Deprecated(forRemoval = true, since = "26.1")
     public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
         return new CuboidFace.UVs(getU(uvs.minU()), getV(uvs.minV()), getU(uvs.maxU()), getV(uvs.maxV()));
     }
@@ -59,8 +76,6 @@ public enum CTMLogic implements StringRepresentable {
     public float getV(float delta) {
         return (float) this.v0 + (float) (this.v1 - this.v0) * (delta / 16.0F);
     }
-
-    public static final Codec<CTMLogic> CODEC = StringRepresentable.fromEnum(CTMLogic::values);
 
     @Override
     public @NonNull String getSerializedName() {

@@ -1,6 +1,6 @@
 {
   "neoforge:definition_type": "ctm:connected_texture_model",
-  "model_location": "ctm:block/glass",
+  "model_location": "ctm:block/glass_16x_test",
   "connected_faces": [
     "all"
   ],
