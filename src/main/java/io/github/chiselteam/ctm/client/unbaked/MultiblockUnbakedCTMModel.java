@@ -88,7 +88,7 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
 
         for (var face : Direction.values()) {
             var cull = getCullface(face, from, to);
-            var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.ordinal()];
+            var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
             var baseQuadsList = new ArrayList<BakedQuad>();
 
             if (bakedBase != null) {

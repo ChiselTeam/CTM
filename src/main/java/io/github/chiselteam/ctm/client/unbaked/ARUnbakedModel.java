@@ -85,7 +85,7 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
             var cull = getCullface(face, from, to);
             var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
 
-            var baseQuadList = new ArrayList<>();
+            var baseQuadList = new ArrayList<BakedQuad>();
             var connQuads = new BakedQuad[4][CTMLogicAR.values().length];
 
             for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++) {
@@ -121,6 +121,9 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
                     bakeLegacyARQuads(baker, face, cull, qUvs, offsets, legacyOverlay, connQuads[cornerIndex], unculledFaces);
                 }
             }
+
+            if (!baseQuadList.isEmpty()) baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
+            connectedQuads.put(face, connQuads);
         }
 
         var bakedOverlays = bakeOverlays();
