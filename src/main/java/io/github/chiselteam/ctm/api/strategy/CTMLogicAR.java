@@ -1,9 +1,20 @@
 package io.github.chiselteam.ctm.api.strategy;
 
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import net.minecraft.core.BlockPos;
 
 public enum CTMLogicAR {
-    T0, T1, T2, T3;
+    T0(CTMTextureKeys.AR_1), T1(CTMTextureKeys.AR_2), T2(CTMTextureKeys.AR_3), T3(CTMTextureKeys.AR_4);
+
+    private final String textureSlot;
+
+    CTMLogicAR(String textureSlot) {
+        this.textureSlot = textureSlot;
+    }
+
+    public String getTextureSlot() {
+        return textureSlot;
+    }
 
     public static CTMLogicAR get(BlockPos pos) {
         int x = pos.getX();

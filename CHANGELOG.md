@@ -1,5 +1,32 @@
 # Changelog
 
+## [26.1.2.9]
+
+### Added
+- Added support for separate textures for Standard, Horizontal, Vertical, Multiblock,
+  AR, TBS, and Edges CTM models, with new texture slots, model templates, and datagen helpers.
+
+### Changed
+- Updated CTM model baking to use separate textures while retaining legacy texture-sheet fallback.
+
+## [26.1.2.8]
+
+- Fixed directional connected textures flipping depending on the block axis.
+- Preserved consistent connected-face ordering.
+
+## [26.1.2.7]
+
+- Added support for model rotation across CTM models and datagen builders.
+- Updated NeoForge to 26.1.2.84.
+
+## [26.1.2.6]
+
+- Added configurable ambient occlusion for CTM models and datagen builders.
+
+## [26.1.2.5]
+
+- Added configurable shading for CTM models and datagen builders.
+
 ## [26.1.2.4]
 
 - Added `layered_connected_texture_model`, allowing multiple CTM layers on the

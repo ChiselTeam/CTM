@@ -1,0 +1,10 @@
+{
+  "textures": {
+    "standard_none": "minecraft:block/glass",
+    "standard_cornerless": "ctm:block/test/glass_cornerless",
+    "standard_vertical": "ctm:block/test/glass_vertical",
+    "standard_horizontal": "ctm:block/test/glass_horizontal",
+    "standard_corner": "ctm:block/test/glass_corner",
+    "particle": "minecraft:block/glass"
+  }
+}

@@ -1,10 +1,13 @@
 package io.github.chiselteam.ctm.client;
 
 import com.mojang.datafixers.util.Pair;
+import com.mojang.math.Transformation;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
+import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.block.dispatch.Variant;
@@ -18,6 +21,8 @@ import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
+import net.neoforged.neoforge.client.model.UnbakedElementsHelper;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
@@ -25,6 +30,9 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements CustomUnbakedBlockStateModel, UnbakedModel {
+    protected ResolvedModel model;
+    protected ModelState state;
+    protected Transformation rootTransform;
 
     protected final Identifier modelLocation;
     protected final Pair<Vector3f, Vector3f> element;
@@ -91,10 +99,18 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
 
     public abstract @NonNull BlockStateModel bake(@NonNull ModelBaker baker);
 
-    protected List<CTMOverlayRule> bakeOverlays(ResolvedModel model) {
+    protected void prepareBakery(ModelBaker baker) {
+        model = baker.getModel(modelLocation);
+        state = modelState.asModelState();
+        rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
+        if (!rootTransform.isIdentity())
+            state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
+    }
+
+    protected List<CTMOverlayRule> bakeOverlays() {
         List<CTMOverlayRule> baked = new ArrayList<>();
         for (CTMModelCodecs.UnbakedOverlayRule unbaked : overlays) {
-            Material mat = getMaterial(model, unbaked.material());
+            Material mat = getMaterial(unbaked.material());
             if (mat != null) {
                 baked.add(new CTMOverlayRule(mat, unbaked.faces(), unbaked.condition(), unbaked.priority(), unbaked.tintIndex(), unbaked.emissivity()));
             }
@@ -102,7 +118,7 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         return baked;
     }
 
-    protected Material getMaterial(ResolvedModel model, String name) {
+    protected Material getMaterial(String name) {
         Identifier override = textureSlots.get(name);
         if (override != null) {
             return new Material(override, false);
@@ -119,21 +135,29 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         return mat;
     }
 
-    protected Material.Baked bakeMaterial(ModelBaker baker, Material material, ResolvedModel context) {
-        if (material == null) return null;
-        return baker.materials().get(material, context);
+    protected CTMTextureSet<CTMLogic> bakeStandardTextureSet(ModelBaker baker) {
+        var textures = new CTMTextureSet<>(CTMLogic.class);
+        for (var logic : CTMLogic.values()) {
+            textures.put(logic, bakeMaterial(baker, getMaterial(logic.getStandardTextureSlot())));
+        }
+        return textures;
     }
 
-    protected Map<CTMOverlayRule, Map<Direction, BakedQuad>> bakeOverlayQuads(ModelBaker baker, List<CTMOverlayRule> rules, ResolvedModel model, Vector3f from, Vector3f to, ModelState state) {
+    protected Material.Baked bakeMaterial(ModelBaker baker, Material material) {
+        if (material == null) return null;
+        return baker.materials().get(material, model);
+    }
+
+    protected Map<CTMOverlayRule, Map<Direction, BakedQuad>> bakeOverlayQuads(ModelBaker baker, List<CTMOverlayRule> rules, Vector3f from, Vector3f to, ModelState state) {
         Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads = new HashMap<>();
-        for (CTMOverlayRule rule : rules) {
+        for (var rule : rules) {
             Map<Direction, BakedQuad> quads = new EnumMap<>(Direction.class);
-            Material.Baked bakedMat = bakeMaterial(baker, rule.material(), model);
+            var bakedMat = bakeMaterial(baker, rule.material());
             if (bakedMat != null) {
-                for (Direction face : rule.faces()) {
-                    Direction cull = getCullface(face, from, to);
-                    CuboidFace overlayFace = new CuboidFace(cull, rule.tintIndex(), "", new CuboidFace.UVs(0, 0, 16, 16), com.mojang.math.Quadrant.R0);
-                    Vector3f[] offsets = getOffsets(face, from, to);
+                for (var face : rule.faces()) {
+                    var cull = getCullface(face, from, to);
+                    var overlayFace = new CuboidFace(cull, rule.tintIndex(), "", new CuboidFace.UVs(0, 0, 16, 16), com.mojang.math.Quadrant.R0);
+                    var offsets = getOffsets(face, from, to);
                     quads.put(face, FaceBakery.bakeQuad(baker, offsets[0], offsets[1], overlayFace, bakedMat, face, state, null, shade, rule.emissivity()));
                 }
             }
@@ -169,7 +193,7 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         BakedQuad quad = value instanceof BakedQuad q ? q
                 : value instanceof BakedQuad[] array ? Arrays.stream(array).filter(Objects::nonNull).findFirst().orElse(null)
                 : null;
-        return quad != null && quad.direction() != null ? quad.direction() : fallback;
+        return quad != null ? quad.direction() : fallback;
     }
 
     protected Direction getCullface(Direction direction, Vector3f from, Vector3f to) {
