@@ -38,34 +38,177 @@ public final class CTMModelTemplates {
     );
 
     /**
-     * TBS CTM template: top/bottom/side textures and connected overlay.
+     * TBS CTM template: base texture and fifteen standalone top/bottom/side states.
      */
-    public static final ModelTemplate TBS = template(CTM_LOADER, TextureSlot.PARTICLE, TextureSlot.TOP, TextureSlot.BOTTOM, TextureSlot.SIDE, CTMTextureSlots.OVERLAY_CONNECTED);
+    public static final ModelTemplate TBS = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.STANDARD_TOP_NONE,
+            CTMTextureSlots.STANDARD_TOP_CORNERLESS,
+            CTMTextureSlots.STANDARD_TOP_VERTICAL,
+            CTMTextureSlots.STANDARD_TOP_HORIZONTAL,
+            CTMTextureSlots.STANDARD_TOP_CORNER,
+            CTMTextureSlots.STANDARD_BOTTOM_NONE,
+            CTMTextureSlots.STANDARD_BOTTOM_CORNERLESS,
+            CTMTextureSlots.STANDARD_BOTTOM_VERTICAL,
+            CTMTextureSlots.STANDARD_BOTTOM_HORIZONTAL,
+            CTMTextureSlots.STANDARD_BOTTOM_CORNER,
+            CTMTextureSlots.STANDARD_SIDE_NONE,
+            CTMTextureSlots.STANDARD_SIDE_CORNERLESS,
+            CTMTextureSlots.STANDARD_SIDE_VERTICAL,
+            CTMTextureSlots.STANDARD_SIDE_HORIZONTAL,
+            CTMTextureSlots.STANDARD_SIDE_CORNER
+    );
 
     /**
-     * Horizontal CTM template: base texture and horizontal connected overlay.
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
      */
-    public static final ModelTemplate HORIZONTAL = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_HORIZONTAL);
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate TBS_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, TextureSlot.TOP, TextureSlot.BOTTOM, TextureSlot.SIDE, CTMTextureSlots.OVERLAY_CONNECTED);
 
     /**
-     * Vertical CTM template: base texture and vertical connected overlay.
+     * Horizontal CTM template: base texture and four standalone horizontal states.
      */
-    public static final ModelTemplate VERTICAL = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_VERTICAL);
+    public static final ModelTemplate HORIZONTAL = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.HORIZONTAL_NONE,
+            CTMTextureSlots.HORIZONTAL_BOTH,
+            CTMTextureSlots.HORIZONTAL_LEFT,
+            CTMTextureSlots.HORIZONTAL_RIGHT
+    );
 
     /**
-     * Multiblock CTM template: base texture and multiblock overlay (2x2, 3x3, or 4x4).
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
      */
-    public static final ModelTemplate MULTIBLOCK_2X2 = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_2X2);
-    public static final ModelTemplate MULTIBLOCK_3X3 = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_3X3);
-    public static final ModelTemplate MULTIBLOCK_4X4 = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_4X4);
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate HORIZONTAL_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_HORIZONTAL);
 
     /**
-     * Anti-repeat (AR) template: base texture and random rotation overlay.
+     * Vertical CTM template: base texture and four standalone vertical states.
      */
-    public static final ModelTemplate AR = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY);
+    public static final ModelTemplate VERTICAL = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.VERTICAL_NONE,
+            CTMTextureSlots.VERTICAL_BOTH,
+            CTMTextureSlots.VERTICAL_TOP,
+            CTMTextureSlots.VERTICAL_BOTTOM
+    );
 
-    public static final ModelTemplate EDGES = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, CTMTextureSlots.OVERLAY_OBSCURED, TextureSlot.PARTICLE);
-    public static final ModelTemplate EDGES_FULL = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, TextureSlot.PARTICLE);
+    /**
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate VERTICAL_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_VERTICAL);
+
+    /**
+     * Multiblock CTM templates: base texture and standalone cells in row-major order.
+     */
+    public static final ModelTemplate MULTIBLOCK_2X2 = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.MULTIBLOCK_2X2_TOP_LEFT,
+            CTMTextureSlots.MULTIBLOCK_2X2_TOP_RIGHT,
+            CTMTextureSlots.MULTIBLOCK_2X2_BOTTOM_LEFT,
+            CTMTextureSlots.MULTIBLOCK_2X2_BOTTOM_RIGHT
+    );
+
+    /**
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate MULTIBLOCK_2X2_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_2X2);
+    public static final ModelTemplate MULTIBLOCK_3X3 = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.MULTIBLOCK_3X3_TOP_LEFT,
+            CTMTextureSlots.MULTIBLOCK_3X3_TOP_CENTER,
+            CTMTextureSlots.MULTIBLOCK_3X3_TOP_RIGHT,
+            CTMTextureSlots.MULTIBLOCK_3X3_CENTER_LEFT,
+            CTMTextureSlots.MULTIBLOCK_3X3_CENTER,
+            CTMTextureSlots.MULTIBLOCK_3X3_CENTER_RIGHT,
+            CTMTextureSlots.MULTIBLOCK_3X3_BOTTOM_LEFT,
+            CTMTextureSlots.MULTIBLOCK_3X3_BOTTOM_CENTER,
+            CTMTextureSlots.MULTIBLOCK_3X3_BOTTOM_RIGHT
+    );
+
+    /**
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate MULTIBLOCK_3X3_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_3X3);
+    public static final ModelTemplate MULTIBLOCK_4X4 = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_0_COLUMN_0,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_0_COLUMN_1,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_0_COLUMN_2,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_0_COLUMN_3,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_1_COLUMN_0,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_1_COLUMN_1,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_1_COLUMN_2,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_1_COLUMN_3,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_2_COLUMN_0,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_2_COLUMN_1,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_2_COLUMN_2,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_2_COLUMN_3,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_3_COLUMN_0,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_3_COLUMN_1,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_3_COLUMN_2,
+            CTMTextureSlots.MULTIBLOCK_4X4_ROW_3_COLUMN_3
+    );
+
+    /**
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate MULTIBLOCK_4X4_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_4X4);
+
+    /**
+     * Anti-repeat (AR) template: base texture and four standalone variants.
+     */
+    public static final ModelTemplate AR = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.AR_1,
+            CTMTextureSlots.AR_2,
+            CTMTextureSlots.AR_3,
+            CTMTextureSlots.AR_4
+    );
+
+    /**
+     * @deprecated Replaced by standalone textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate AR_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY);
+
+    public static final ModelTemplate EDGES = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.STANDARD_NONE, CTMTextureSlots.STANDARD_CORNERLESS, CTMTextureSlots.STANDARD_VERTICAL, CTMTextureSlots.STANDARD_HORIZONTAL, CTMTextureSlots.STANDARD_CORNER, CTMTextureSlots.OVERLAY_OBSCURED);
+
+    public static final ModelTemplate EDGES_FULL = template(
+            CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
+            CTMTextureSlots.EDGES_NONE,
+            CTMTextureSlots.EDGES_DIAGONALS_TOP_LEFT_BOTTOM_RIGHT,
+            CTMTextureSlots.EDGES_DIAGONALS_TOP_RIGHT_BOTTOM_LEFT,
+            CTMTextureSlots.EDGES_TOP_LEFT,
+            CTMTextureSlots.EDGES_CORNER_BOTTOM_RIGHT,
+            CTMTextureSlots.EDGES_BOTTOM,
+            CTMTextureSlots.EDGES_CORNER_BOTTOM_LEFT,
+            CTMTextureSlots.EDGES_TOP_RIGHT,
+            CTMTextureSlots.EDGES_RIGHT,
+            CTMTextureSlots.EDGES_ALL,
+            CTMTextureSlots.EDGES_LEFT,
+            CTMTextureSlots.EDGES_RIGHT_BOTTOM,
+            CTMTextureSlots.EDGES_CORNER_TOP_RIGHT,
+            CTMTextureSlots.EDGES_TOP,
+            CTMTextureSlots.EDGES_CORNER_TOP_LEFT,
+            CTMTextureSlots.EDGES_BOTTOM_LEFT
+    );
+
+    /**
+     * @deprecated Replaced by standalone Standard-state textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate EDGES_LEGACY = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, CTMTextureSlots.OVERLAY_OBSCURED, TextureSlot.PARTICLE);
+
+    /**
+     * @deprecated Replaced by standalone edge-state textures. Remove in 27.1.
+     */
+    @Deprecated(forRemoval = true, since = "26.1")
+    public static final ModelTemplate EDGES_FULL_LEGACY = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, TextureSlot.PARTICLE);
 
     private static ModelTemplate template(Identifier loader, TextureSlot... requiredSlots) {
         return new ModelTemplate(Optional.empty(), Optional.of(loader.toString()), requiredSlots);

@@ -1,5 +1,6 @@
 package io.github.chiselteam.ctm.api.strategy;
 
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -8,6 +9,7 @@ public enum CTMLogic2x2 {
     TOP_LEFT(0, 0), TOP_RIGHT(16, 0),
     BOTTOM_LEFT(0, 16), BOTTOM_RIGHT(16, 16);
 
+    @Deprecated(forRemoval = true, since = "26.1")
     private final int u, v;
 
     CTMLogic2x2(int u, int v) {
@@ -15,6 +17,16 @@ public enum CTMLogic2x2 {
         this.v = v;
     }
 
+    public String getTextureSlot() {
+        return switch (this) {
+            case TOP_LEFT -> CTMTextureKeys.MULTIBLOCK_2X2_TOP_LEFT;
+            case TOP_RIGHT -> CTMTextureKeys.MULTIBLOCK_2X2_TOP_RIGHT;
+            case BOTTOM_LEFT -> CTMTextureKeys.MULTIBLOCK_2X2_BOTTOM_LEFT;
+            case BOTTOM_RIGHT -> CTMTextureKeys.MULTIBLOCK_2X2_BOTTOM_RIGHT;
+        };
+    }
+
+    @Deprecated(forRemoval = true, since = "26.1")
     public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
         float minU = (u + uvs.minU()) / 2.0f;
         float minV = (v + uvs.minV()) / 2.0f;

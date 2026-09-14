@@ -2,7 +2,6 @@ package io.github.chiselteam.ctm.client.unbaked;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Quadrant;
-import com.mojang.math.Transformation;
 import com.mojang.serialization.MapCodec;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
@@ -15,15 +14,12 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
-import net.neoforged.neoforge.client.model.UnbakedElementsHelper;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
@@ -55,15 +51,12 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
 
     @Override
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
-        ResolvedModel model = baker.getModel(modelLocation);
-        ModelState state = modelState.asModelState();
-        Transformation rootTransform = model.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
-        if (!rootTransform.isIdentity()) state = UnbakedElementsHelper.composeRootTransformIntoModelState(state, rootTransform);
+        prepareBakery(baker);
 
-        var bakedBase = bakeMaterial(baker, getMaterial(model, CTMTextureKeys.BASE), model);
-        var bakedParticle = bakeMaterial(baker, getMaterial(model, CTMTextureKeys.PARTICLE), model);
+        var bakedBase = bakeMaterial(baker, getMaterial(CTMTextureKeys.BASE));
+        var bakedParticle = bakeMaterial(baker, getMaterial(CTMTextureKeys.PARTICLE));
 
-        var standardTextures = bakeStandardTextureSet(baker, model);
+        var standardTextures = bakeStandardTextureSet(baker);
         boolean useStandaloneTextures = standardTextures.isComplete();
 
         @Deprecated(forRemoval = true, since = "26.1")
@@ -73,8 +66,8 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         Material.Baked bakedOverlayConnected = null;
 
         if(!useStandaloneTextures) {
-            bakedOverlay = bakeMaterial(baker, getMaterial(model, "overlay_texture"), model);
-            bakedOverlayConnected = bakeMaterial(baker, getMaterial(model, "overlay_connected"), model);
+            bakedOverlay = bakeMaterial(baker, getMaterial("overlay_texture"));
+            bakedOverlayConnected = bakeMaterial(baker, getMaterial("overlay_connected"));
         }
 
         if (bakedParticle == null) {
@@ -131,17 +124,8 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
             connectedQuads.put(face, connQuads);
         }
 
-        var bakedOverlays = bakeOverlays(model);
-        return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, model, from, to, state)), ambientOcclusion);
-    }
-
-    private CTMTextureSet<CTMLogic> bakeStandardTextureSet(ModelBaker baker, ResolvedModel model) {
-        var textures = new CTMTextureSet<>(CTMLogic.class);
-        for(var logic : CTMLogic.values()) {
-            var material = getMaterial(model, logic.getStandardTextureSlot());
-            textures.put(logic, bakeMaterial(baker, material, model));
-        }
-        return textures;
+        var bakedOverlays = bakeOverlays();
+        return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion);
     }
 
     private void bakeStandaloneConnectedQuads(ModelBaker baker, ModelState state, Direction face, Direction cull, Vector3f from, Vector3f to, CuboidFace.UVs uvs, CTMTextureSet<CTMLogic> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {

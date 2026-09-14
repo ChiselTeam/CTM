@@ -1,16 +1,16 @@
 package io.github.chiselteam.ctm.client.baked;
 
 import io.github.chiselteam.ctm.api.geometry.EdgesCTMKey;
-import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
-import io.github.chiselteam.ctm.impl.texture.StandardCTMOverlayTable;
 import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
+import io.github.chiselteam.ctm.impl.texture.StandardCTMOverlayTable;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -27,8 +27,8 @@ import java.util.Set;
  * Baked model implementation shared by EDGES and EDGES_FULL.
  *
  * <p>EDGES renders four independently selected CTM quadrants.
- * EDGES_FULL selects one cell from a 4x4 atlas and renders that cell
- * across the complete face.</p>
+ * EDGES_FULL selects one of sixteen pre-baked full-face states. The baker
+ * supplies standalone sprites or legacy sheet cells in the same order.</p>
  */
 public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlockStateModel<EdgesCTMKey> {
 
@@ -240,7 +240,9 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
     }
 
     /**
-     * Returns the row-major atlas index used by EDGES_FULL.
+     * Returns the EDGES_FULL output-state index (CTMLogicEdges ordinal).
+     * The historical row-major ordering is retained for both texture formats;
+     * this reduction includes diagonal and obscured states, not just cardinal bits.
      */
     private static int fullAtlasIndex(int packed) {
         if ((packed & EdgesCTMKey.OBSCURED) != 0)

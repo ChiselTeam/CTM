@@ -34,4 +34,8 @@ public class CTMTextureSet<T extends Enum<T>> {
     public Map<T, Material.Baked> getMaterials() {
         return materials;
     }
+
+    public Class<T> getType() {
+        return type;
+    }
 }

@@ -49,6 +49,32 @@ public enum CTMLogic implements StringRepresentable {
         };
     }
 
+    public String getStandardTextureSlot(Direction face) {
+        return switch (face) {
+            case UP -> switch (this) {
+                case NONE -> CTMTextureKeys.STANDARD_TOP_NONE;
+                case CORNERLESS -> CTMTextureKeys.STANDARD_TOP_CORNERLESS;
+                case VERTICAL -> CTMTextureKeys.STANDARD_TOP_VERTICAL;
+                case HORIZONTAL -> CTMTextureKeys.STANDARD_TOP_HORIZONTAL;
+                case CORNER -> CTMTextureKeys.STANDARD_TOP_CORNER;
+            };
+            case DOWN -> switch (this) {
+                case NONE -> CTMTextureKeys.STANDARD_BOTTOM_NONE;
+                case CORNERLESS -> CTMTextureKeys.STANDARD_BOTTOM_CORNERLESS;
+                case VERTICAL -> CTMTextureKeys.STANDARD_BOTTOM_VERTICAL;
+                case HORIZONTAL -> CTMTextureKeys.STANDARD_BOTTOM_HORIZONTAL;
+                case CORNER -> CTMTextureKeys.STANDARD_BOTTOM_CORNER;
+            };
+            default -> switch (this) {
+                case NONE -> CTMTextureKeys.STANDARD_SIDE_NONE;
+                case CORNERLESS -> CTMTextureKeys.STANDARD_SIDE_CORNERLESS;
+                case VERTICAL -> CTMTextureKeys.STANDARD_SIDE_VERTICAL;
+                case HORIZONTAL -> CTMTextureKeys.STANDARD_SIDE_HORIZONTAL;
+                case CORNER -> CTMTextureKeys.STANDARD_SIDE_CORNER;
+            };
+        };
+    }
+
     public static CTMLogic of(boolean horizontal, boolean vertical, boolean corner) {
         if (corner) {
             return CORNERLESS;

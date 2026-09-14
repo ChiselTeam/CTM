@@ -1,5 +1,6 @@
 package io.github.chiselteam.ctm.api.strategy;
 
+import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -9,6 +10,7 @@ public enum CTMLogic3x3 {
     MID_LEFT(0, 16), MID_CENTER(16, 16), MID_RIGHT(32, 16),
     BOTTOM_LEFT(0, 32), BOTTOM_CENTER(16, 32), BOTTOM_RIGHT(32, 32);
 
+    @Deprecated(forRemoval = true, since = "26.1")
     private final int u, v;
 
     CTMLogic3x3(int u, int v) {
@@ -16,6 +18,21 @@ public enum CTMLogic3x3 {
         this.v = v;
     }
 
+    public String getTextureSlot() {
+        return switch (this) {
+            case TOP_LEFT -> CTMTextureKeys.MULTIBLOCK_3X3_TOP_LEFT;
+            case TOP_CENTER -> CTMTextureKeys.MULTIBLOCK_3X3_TOP_CENTER;
+            case TOP_RIGHT -> CTMTextureKeys.MULTIBLOCK_3X3_TOP_RIGHT;
+            case MID_LEFT -> CTMTextureKeys.MULTIBLOCK_3X3_CENTER_LEFT;
+            case MID_CENTER -> CTMTextureKeys.MULTIBLOCK_3X3_CENTER;
+            case MID_RIGHT -> CTMTextureKeys.MULTIBLOCK_3X3_CENTER_RIGHT;
+            case BOTTOM_LEFT -> CTMTextureKeys.MULTIBLOCK_3X3_BOTTOM_LEFT;
+            case BOTTOM_CENTER -> CTMTextureKeys.MULTIBLOCK_3X3_BOTTOM_CENTER;
+            case BOTTOM_RIGHT -> CTMTextureKeys.MULTIBLOCK_3X3_BOTTOM_RIGHT;
+        };
+    }
+
+    @Deprecated(forRemoval = true, since = "26.1")
     public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
         float minU = (u + uvs.minU()) / 3.0f;
         float minV = (v + uvs.minV()) / 3.0f;
