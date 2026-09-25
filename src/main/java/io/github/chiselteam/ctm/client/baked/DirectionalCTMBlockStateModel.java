@@ -101,7 +101,7 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
 
             if (axis == Direction.Axis.Y) {
                 horizontalLogic = CTMLogicHorizontal.get(shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.WEST)), shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.EAST)));
-                verticalLogic = CTMLogicVertical.get(shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.NORTH)), shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.SOUTH)));
+                verticalLogic = variant.kind().isCTMV() ? CTMLogicVertical.NONE : CTMLogicVertical.get(shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.NORTH)), shouldConnectSide(level, pos, state, face, orientation.toWorld(Direction.SOUTH)));
             } else {
                 Direction horizontalDir = localFace.getClockWise();
                 horizontalLogic = CTMLogicHorizontal.get(shouldConnectSide(level, pos, state, face, orientation.toWorld(horizontalDir.getOpposite())), shouldConnectSide(level, pos, state, face, orientation.toWorld(horizontalDir)));

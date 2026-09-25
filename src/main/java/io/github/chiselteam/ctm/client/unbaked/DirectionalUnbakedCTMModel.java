@@ -110,7 +110,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
         int center = 8;
 
         for (var face : Direction.values()) {
-            var baseForFace = setBaseTextureForHorizontalState(face);
+            var baseForFace = baseTextureForFace(face);
             var baseQuadsList = new ArrayList<BakedQuad>();
             var faceUVs = getRelativeUVs(face, from, to);
             var offsets = getOffsets(face, from, to);
@@ -139,7 +139,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
                 }
             }
 
-            if (variant.kind().isCTMV()) {
+            if (variant.kind().isCTMV() && face.getAxis().isHorizontal()) {
                 var recipe = verticalRecipe
                         .face(face)
                         .cull(getCullface(face, from, to))
@@ -160,9 +160,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
         for (var entry : verticalQuads.entrySet()) {
             directionSource.put(entry.getKey(), entry.getValue()[0]);
         }
-        if (directionSource.isEmpty()) {
-            for (var entry : baseQuads.entrySet()) directionSource.put(entry.getKey(), entry.getValue()[0]);
-        }
+        for (var entry : baseQuads.entrySet()) directionSource.putIfAbsent(entry.getKey(), entry.getValue()[0]);
         var bakedConnectedFaces = remapDirections(connectedFaces, directionSource);
         var bakedUnculledFaces = remapDirections(unculledFaces, directionSource);
         var ruleQuads = bakeOverlayQuads(baker, bakedOverlays, from, to, state);
@@ -171,8 +169,8 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
         return new DirectionalCTMBlockStateModel(bakedConnectedFaces, bakedUnculledFaces, renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(horizontalQuads), remapQuadDirections(verticalQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, ruleQuads, ambientOcclusion);
     }
 
-    private Material.Baked setBaseTextureForHorizontalState(Direction face) {
-        if (variant.kind().isCTMH()) {
+    private Material.Baked baseTextureForFace(Direction face) {
+        if (variant.kind().isCTMH() || variant.kind().isCTMV()) {
             if (face == Direction.UP && bakedTop != null) return bakedTop;
             else if (face == Direction.DOWN && bakedBottom != null) return bakedBottom;
         }
