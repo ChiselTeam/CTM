@@ -113,10 +113,11 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
                     baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
+                var offsets = getOffsets(face, qFrom, qTo);
                 if(useStandaloneTextures) {
-                    bakeStandaloneConnectedQuads(baker, state, face, cull, qFrom, qTo, qUvs, standardTextures, connQuads[c], unculledFaces);
+                    bakeStandaloneConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, standardTextures, connQuads[c], unculledFaces);
                 } else {
-                    bakeLegacyConnectedQuads(baker, state, face, cull, qFrom, qTo, qUvs, bakedOverlay, bakedOverlayConnected, connQuads[c], unculledFaces);
+                    bakeLegacyConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, bakedOverlay, bakedOverlayConnected, connQuads[c], unculledFaces);
                 }
             }
 
