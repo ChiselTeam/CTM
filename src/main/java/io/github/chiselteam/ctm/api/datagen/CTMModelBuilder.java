@@ -18,6 +18,7 @@ import net.neoforged.neoforge.client.model.generators.blockstate.CustomBlockStat
 import net.neoforged.neoforge.client.model.generators.blockstate.UnbakedMutator;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,7 +46,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
     private int baseEmissivity = 0;
     private int tintIndex = -1;
     private int emissivity = 0;
-    private boolean shade = true;
+    private @Nullable Direction shadeDirectionOverride;
     private boolean ambientOcclusion = true;
     private boolean eldritch = false;
     private boolean waterOffset = false;
@@ -213,9 +214,9 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         return this;
     }
 
-    /** Controls directional diffuse shading for every generated quad. */
-    public CTMModelBuilder shade(boolean shade) {
-        this.shade = shade;
+    /** Overrides the shading direction for every generated quad; null uses each quad's actual direction. */
+    public CTMModelBuilder shadeDirectionOverride(@Nullable Direction shadeDirectionOverride) {
+        this.shadeDirectionOverride = shadeDirectionOverride;
         return this;
     }
 
@@ -552,7 +553,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
         result.baseEmissivity = this.baseEmissivity;
         result.tintIndex = this.tintIndex;
         result.emissivity = this.emissivity;
-        result.shade = this.shade;
+        result.shadeDirectionOverride = this.shadeDirectionOverride;
         result.ambientOcclusion = this.ambientOcclusion;
         result.eldritch = this.eldritch;
         result.waterOffset = this.waterOffset;
@@ -576,7 +577,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 baseEmissivity,
                 tintIndex,
                 emissivity,
-                shade,
+                shadeDirectionOverride,
                 ambientOcclusion,
                 eldritch,
                 connectionPredicate,

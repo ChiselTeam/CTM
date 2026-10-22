@@ -27,6 +27,7 @@ import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,16 +35,16 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
 
     private Material.Baked bakedBase, bakedTop, bakedBottom;
 
-    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
+    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, @Nullable Direction shadeDirectionOverride, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shadeDirectionOverride, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
     }
 
-    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
+    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, @Nullable Direction shadeDirectionOverride, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shadeDirectionOverride, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
-        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
+    public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, @Nullable Direction shadeDirectionOverride, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+        super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shadeDirectionOverride, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
     public DirectionalUnbakedCTMModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
@@ -177,7 +178,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
         var qUvs = getRelativeUVs(face, qFrom, qTo);
         var baseFace = new CuboidFace(getCullface(face, from, to), baseTintIndex, "", qUvs, Quadrant.R0);
 
-        return FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, baseForFace, face, state, null, shade, baseEmissivity);
+        return FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, baseForFace, face, state, null, shadeDirectionOverride, baseEmissivity);
     }
 
     private CTMTextureSet<CTMLogicHorizontal> bakeHorizontalTextures(ModelBaker baker, ResolvedModel model) {
@@ -224,7 +225,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
             var connFace = new CuboidFace(recipe.cull(), tintIndex, "", recipe.faceUvs(), Quadrant.R0);
             if (connFace.cullForDirection() == null) recipe.unculledFaces().add(recipe.face());
 
-            quads[logic.ordinal()] = FaceBakery.bakeQuad(recipe.baker(), from, to, connFace, material, recipe.face(), recipe.state(), null, shade, emissivity);
+            quads[logic.ordinal()] = FaceBakery.bakeQuad(recipe.baker(), from, to, connFace, material, recipe.face(), recipe.state(), null, shadeDirectionOverride, emissivity);
         }
 
         recipe.bakedQuads().put(recipe.face(), quads);
@@ -240,7 +241,7 @@ public class DirectionalUnbakedCTMModel extends AbstractUnbakedConnectedTextureB
             var connFace = new CuboidFace(recipe.cull(), tintIndex, "", recipe.faceUvs(), Quadrant.R0);
             if (connFace.cullForDirection() == null) recipe.unculledFaces().add(recipe.face());
 
-            quads[logic.ordinal()] = FaceBakery.bakeQuad(recipe.baker(), recipe.offsets()[0], recipe.offsets()[1], connFace, material, recipe.face(), recipe.state(), null, shade, emissivity);
+            quads[logic.ordinal()] = FaceBakery.bakeQuad(recipe.baker(), recipe.offsets()[0], recipe.offsets()[1], connFace, material, recipe.face(), recipe.state(), null, shadeDirectionOverride, emissivity);
         }
 
         recipe.bakedQuads().put(recipe.face(), quads);
