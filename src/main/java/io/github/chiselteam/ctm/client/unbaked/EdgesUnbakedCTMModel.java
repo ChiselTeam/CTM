@@ -138,7 +138,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
         }
 
         var bakedOverlays = bakeOverlays();
-        return new EdgesCTMBlockStateModel(remapDirections(connectedFaces, directionQuads), remapDirections(unculledFaces, directionQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(regularConnectedQuads), remapQuadDirections(fullAtlasQuads), remapQuadDirections(obscuredQuads), bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, new CTMFaceOrientation(state));
+        return new EdgesCTMBlockStateModel(remapDirections(connectedFaces, directionQuads), remapDirections(unculledFaces, directionQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(regularConnectedQuads), remapQuadDirections(fullAtlasQuads), remapQuadDirections(obscuredQuads), bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, CTMFaceOrientation.of(state));
     }
 
     private CTMTextureSet<CTMLogicEdges> bakeEdgesTextureSet(ModelBaker baker) {

@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,6 +76,16 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     }
 
     @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        super.visitQuadArrays(visitor);
+        connectedQuads.values().forEach(corners -> {
+            if (corners != null) {
+                for (BakedQuad[] quads : corners) visitor.accept(quads);
+            }
+        });
+    }
+
+    @Override
     protected StandardCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
         return new StandardCTMKey(
                 computeFace(level, pos, state, Direction.DOWN, orientation),
@@ -120,18 +131,17 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     }
 
     private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMFaceOrientation orientation) {
-        Direction[] planeDirections = orientation.cornerDirections(face);
         int packed = 0;
 
         for(int c = 0; c < 4; c++) {
-            Direction s1 = planeDirections[c];
-            Direction s2 = planeDirections[(c + 1) % 4];
+            Direction s1 = orientation.cornerDirection(face, c);
+            Direction s2 = orientation.cornerDirection(face, (c + 1) % 4);
 
             boolean firstConnected = shouldConnectSide(level, pos, state, face, s1);
             boolean secondConnected = shouldConnectSide(level, pos, state, face, s2);
             boolean corner = firstConnected && secondConnected && isCornerBlockPresent(level, pos, state, face, s1, s2);
 
-            boolean firstIsHorizontal = s1.getAxis() == orientation.textureDirections(face)[1].getAxis();
+            boolean firstIsHorizontal = s1.getAxis() == orientation.textureDirection(face, 1).getAxis();
             CTMLogic logic = firstIsHorizontal ? CTMLogic.of(firstConnected, secondConnected, corner) : CTMLogic.of(secondConnected, firstConnected, corner);
             packed |= logic.ordinal() << (c * 3);
         }

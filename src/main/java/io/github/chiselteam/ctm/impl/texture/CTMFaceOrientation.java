@@ -13,9 +13,24 @@ import java.util.Map;
 
 public final class CTMFaceOrientation {
     public static final CTMFaceOrientation IDENTITY = new CTMFaceOrientation(new ModelState() {});
+    private static final Matrix4fc IDENTITY_UV = new Matrix4f();
 
     private final Map<Direction, Direction[]> corners = new EnumMap<>(Direction.class);
     private final Map<Direction, Direction[]> textures = new EnumMap<>(Direction.class);
+
+    public static CTMFaceOrientation of(ModelState state) {
+        if (state.transformation().isIdentity()) {
+            boolean identityUVs = true;
+            for (var face : Direction.values()) {
+                if (!state.faceTransformation(face).equals(IDENTITY_UV, 0.0F)) {
+                    identityUVs = false;
+                    break;
+                }
+            }
+            if (identityUVs) return IDENTITY;
+        }
+        return new CTMFaceOrientation(state);
+    }
 
     public CTMFaceOrientation(ModelState state) {
         for (var localFace : Direction.values()) {
@@ -47,11 +62,27 @@ public final class CTMFaceOrientation {
     }
 
     public Direction[] cornerDirections(Direction face) {
-        return corners.get(face);
+        return corners.get(face).clone();
     }
 
     public Direction[] textureDirections(Direction face) {
-        return textures.get(face);
+        return textures.get(face).clone();
+    }
+
+    public Direction cornerDirection(Direction face, int corner) {
+        return corners.get(face)[corner];
+    }
+
+    public Direction textureDirection(Direction face, int index) {
+        return textures.get(face)[index];
+    }
+
+    public int textureIndex(Direction face, Direction direction) {
+        Direction[] directions = textures.get(face);
+        for (int i = 0; i < directions.length; i++) {
+            if (directions[i] == direction) return i;
+        }
+        throw new IllegalArgumentException(direction + " is not in the texture plane of " + face);
     }
 
     public static ModelState atlasState(ModelState state, float u, float v, float size) {

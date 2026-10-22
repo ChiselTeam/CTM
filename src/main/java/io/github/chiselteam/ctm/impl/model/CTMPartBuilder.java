@@ -33,7 +33,7 @@ public final class CTMPartBuilder {
                 flags |= quad.materialInfo().flags();
             }
 
-            List<BakedQuad> immutableQuads = Collections.unmodifiableList(faceQuads);
+            List<BakedQuad> immutableQuads = List.copyOf(faceQuads);
             quadsMap.put(face, immutableQuads);
 
             if(unculledFaces.contains(face)) {
@@ -54,7 +54,6 @@ public final class CTMPartBuilder {
             faceQuads.add(quad);
         }
     }
-
 
     public static void appendPatternQuads(BakedQuad[][] quads, int pattern, List<BakedQuad> faceQuads) {
         if (quads == null) return;

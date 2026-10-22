@@ -1,5 +1,6 @@
 package io.github.chiselteam.ctm.client.baked;
 
+import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -11,12 +12,9 @@ import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-/**
- * Composes multiple CTM models in draw order. Each child computes its own
- * geometry key, so layers may use different CTM kinds and connection rules.
- */
-public final class LayeredCTMBlockStateModel implements DynamicBlockStateModel {
+public final class LayeredCTMBlockStateModel implements DynamicBlockStateModel, CTMQuadStorage {
 
     private final List<BlockStateModel> layers;
     private final Material.Baked particleMaterial;
@@ -29,6 +27,11 @@ public final class LayeredCTMBlockStateModel implements DynamicBlockStateModel {
         this.materialFlags = layers.stream()
                 .mapToInt(BlockStateModel::materialFlags)
                 .reduce(0, (left, right) -> left | right);
+    }
+
+    @Override
+    public void visitChildModels(Consumer<BlockStateModel> visitor) {
+        layers.forEach(visitor);
     }
 
     @Override

@@ -127,7 +127,7 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         }
 
         var bakedOverlays = bakeOverlays();
-        return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, new CTMFaceOrientation(state));
+        return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, CTMFaceOrientation.of(state));
     }
 
     private void bakeStandaloneConnectedQuads(ModelBaker baker, ModelState state, Direction face, Direction cull, Vector3f from, Vector3f to, CuboidFace.UVs uvs, CTMTextureSet<CTMLogic> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {

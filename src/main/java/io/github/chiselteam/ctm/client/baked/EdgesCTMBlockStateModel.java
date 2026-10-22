@@ -18,8 +18,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,6 +67,18 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
         this.ruleQuads = ruleQuads;
 
         if (!kind.isEdges() && !kind.isEdgesFull()) throw new IllegalArgumentException("EdgesCTMBlockStateModel requires EDGES or EDGES_FULL, got %s".formatted(kind));
+    }
+
+    @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        super.visitQuadArrays(visitor);
+        regularConnectedQuads.values().forEach(corners -> {
+            if (corners != null) {
+                for (BakedQuad[] quads : corners) visitor.accept(quads);
+            }
+        });
+        fullAtlasQuads.values().forEach(visitor);
+        obscuredQuads.values().forEach(visitor);
     }
 
     @Override
@@ -120,12 +132,10 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
         if (matches(level, pos, state, face, pos.relative(face)))
             return EdgesCTMKey.OBSCURED;
 
-        Direction[] directions = orientation.textureDirections(face);
-
-        Direction top = directions[0];
-        Direction right = directions[1];
-        Direction bottom = directions[2];
-        Direction left = directions[3];
+        var top = orientation.textureDirection(face, 0);
+        var right = orientation.textureDirection(face, 1);
+        var bottom = orientation.textureDirection(face, 2);
+        var left = orientation.textureDirection(face, 3);
 
         int packed = 0;
 
@@ -197,15 +207,13 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
         boolean bottom = has(packed, EdgesCTMKey.BOTTOM);
         boolean left = has(packed, EdgesCTMKey.LEFT);
 
-        Direction[] texture = orientation.textureDirections(face);
-        Direction[] corners = orientation.cornerDirections(face);
         boolean[] sides = {top, right, bottom, left};
         int[] diagonals = {EdgesCTMKey.TOP_RIGHT, EdgesCTMKey.BOTTOM_RIGHT, EdgesCTMKey.BOTTOM_LEFT, EdgesCTMKey.TOP_LEFT};
         int pattern = 0;
         int multiplier = 1;
         for (int c = 0; c < 4; c++) {
-            int a = Arrays.asList(texture).indexOf(corners[c]);
-            int b = Arrays.asList(texture).indexOf(corners[(c + 1) % 4]);
+            int a = orientation.textureIndex(face, orientation.cornerDirection(face, c));
+            int b = orientation.textureIndex(face, orientation.cornerDirection(face, (c + 1) % 4));
             int diagonal = (a + 1) % 4 == b ? a : b;
             CTMLogic logic = edgeLogic(sides[a], sides[b], has(packed, diagonals[diagonal]), a % 2 == 0);
             pattern += logic.ordinal() * multiplier;

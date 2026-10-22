@@ -1,6 +1,7 @@
 package io.github.chiselteam.ctm.client.baked;
 
 import io.github.chiselteam.ctm.impl.model.EldritchQuadTransformer;
+import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -20,19 +21,14 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
-/**
- * A [DynamicBlockStateModel] decorator that wraps another [BlockStateModel]
- * and applies the [EldritchQuadTransformer] to every quad it produces.
- */
-public class EldritchBlockStateModel implements DynamicBlockStateModel {
+public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadStorage {
 
-    /** Hard upper bound on the position cache; oldest entries are evicted on overflow. */
     private static final int MAX_CACHE_ENTRIES = 4096;
 
     private final BlockStateModel delegate;
 
-    /** Position -> transformed parts. Bounded LRU; access-order so {@code get} renews freshness. */
     private final Map<Long, List<BlockStateModelPart>> cache = Collections.synchronizedMap(
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
@@ -44,6 +40,11 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel {
 
     public EldritchBlockStateModel(BlockStateModel delegate) {
         this.delegate = delegate;
+    }
+
+    @Override
+    public void visitChildModels(Consumer<BlockStateModel> visitor) {
+        visitor.accept(delegate);
     }
 
     @Override

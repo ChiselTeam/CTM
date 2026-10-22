@@ -20,6 +20,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlockStateModel<DirectionalCTMKey> {
 
@@ -84,6 +85,14 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         this.verticalQuads = verticalQuads;
         this.ruleQuads = Map.of();
         this.effectiveBaseQuads = computeEffectiveBaseQuads();
+    }
+
+    @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        super.visitQuadArrays(visitor);
+        horizontalQuads.values().forEach(visitor);
+        verticalQuads.values().forEach(visitor);
+        effectiveBaseQuads.values().forEach(visitor);
     }
 
     @Override
@@ -152,13 +161,6 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         }
     }
 
-    /**
-     * The CTMH/CTMV tile quads are baked coplanar with the base quads and fully cover the face,
-     * so the base quad must be dropped on any side where a directional tile quad will always render,
-     * otherwise the two quads z-fight. Bookshelf-like kinds are inset and keep their base quads.
-     * With a water offset the tile quads are offset off-plane, so the base quads must be kept,
-     * otherwise the base layer disappears.
-     */
     private Map<Direction, BakedQuad[]> computeEffectiveBaseQuads() {
         if (variant.waterOffset()) {
             return baseQuads;

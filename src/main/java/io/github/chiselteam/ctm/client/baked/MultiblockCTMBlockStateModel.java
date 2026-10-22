@@ -29,6 +29,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockStateModel<MultiblockCTMKey> {
 
@@ -109,6 +110,15 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
     }
 
     @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        super.visitQuadArrays(visitor);
+        multiblock2x2Quads.values().forEach(visitor);
+        multiblock3x3Quads.values().forEach(visitor);
+        multiblock4x4Quads.values().forEach(visitor);
+        effectiveBaseQuads.values().forEach(visitor);
+    }
+
+    @Override
     protected MultiblockCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
         CTMLogicOrientation orientation = CTMLogicOrientation.of(state);
         BlockPos localPos = orientation.toLocal(pos);
@@ -173,12 +183,6 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
         }
     }
 
-    /**
-     * The multiblock tile quads are baked coplanar with the base quads and fully cover the face,
-     * so the base quad must be dropped on any side where a tile quad will always render,
-     * otherwise the two quads z-fight. With a water offset the tile quads are offset off-plane,
-     * so the base quads must be kept, otherwise the base layer disappears.
-     */
     private Map<Direction, BakedQuad[]> computeEffectiveBaseQuads() {
         if (variant.waterOffset()) {
             return baseQuads;

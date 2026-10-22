@@ -1,5 +1,9 @@
 package io.github.chiselteam.ctm.client;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
 import io.github.chiselteam.ctm.api.geometry.CTMKeyWithOverlays;
 import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
@@ -8,7 +12,6 @@ import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
@@ -17,15 +20,16 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
-import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
-public abstract class AbstractConnectedTextureBlockStateModel<K> implements DynamicBlockStateModel {
+public abstract class AbstractConnectedTextureBlockStateModel<K> implements DynamicBlockStateModel, CTMQuadStorage {
+
+    private static final int MAX_CACHED_PARTS = 256;
 
     protected final Set<Direction> connectedFaces;
     protected final Set<Direction> unculledFaces;
@@ -38,7 +42,7 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     protected final List<CTMOverlayRule> overlayRules;
     protected final boolean ambientOcclusion;
 
-    private final Map<Object, ConnectedTextureBlockModelPart> parts = new ConcurrentHashMap<>();
+    private volatile LoadingCache<Object, ConnectedTextureBlockModelPart> parts;
 
     protected final int materialFlags;
 
@@ -93,13 +97,36 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
         K baseKey = computeCTMKey(level, pos, state, random);
         long mask = computeOverlayMask(level, pos, state);
         Object key = mask == 0 ? baseKey : new CTMKeyWithOverlays<>(baseKey, mask);
-        parts.add(this.parts.computeIfAbsent(key, k -> {
-            if (k instanceof CTMKeyWithOverlays) {
-                return createPart(((CTMKeyWithOverlays<K>) k).baseKey(), ((CTMKeyWithOverlays<K>) k).overlayMask());
-            } else {
-                return createPart((K) k, 0L);
+        parts.add(partCache().getUnchecked(key));
+    }
+
+    private LoadingCache<Object, ConnectedTextureBlockModelPart> partCache() {
+        var cache = parts;
+        if (cache == null) {
+            synchronized (this) {
+                cache = parts;
+                if (cache == null) {
+                    cache = CacheBuilder.newBuilder()
+                            .maximumSize(MAX_CACHED_PARTS)
+                            .build(CacheLoader.from(this::createCachedPart));
+                    parts = cache;
+                }
             }
-        }));
+        }
+        return cache;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ConnectedTextureBlockModelPart createCachedPart(Object key) {
+        if (key instanceof CTMKeyWithOverlays<?>(Object baseKey, long overlayMask)) {
+            return createPart((K) baseKey, overlayMask);
+        }
+        return createPart((K) key, 0L);
+    }
+
+    @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        baseQuads.values().forEach(visitor);
     }
 
     protected abstract K computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random);

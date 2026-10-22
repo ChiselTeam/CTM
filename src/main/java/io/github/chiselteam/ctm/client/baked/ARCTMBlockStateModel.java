@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +59,16 @@ public class ARCTMBlockStateModel extends AbstractConnectedTextureBlockStateMode
         super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant);
         this.connectedQuads = connectedQuads;
         this.ruleQuads = Map.of();
+    }
+
+    @Override
+    public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
+        super.visitQuadArrays(visitor);
+        connectedQuads.values().forEach(corners -> {
+            if (corners != null) {
+                for (BakedQuad[] quads : corners) visitor.accept(quads);
+            }
+        });
     }
 
     @Override
