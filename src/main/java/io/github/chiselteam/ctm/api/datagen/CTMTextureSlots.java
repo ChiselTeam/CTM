@@ -8,43 +8,7 @@ public final class CTMTextureSlots {
     public static final TextureSlot BASE = TextureSlot.create(CTMTextureKeys.BASE);
     public static final TextureSlot STANDARD_NONE, STANDARD_CORNERLESS, STANDARD_VERTICAL, STANDARD_HORIZONTAL, STANDARD_CORNER;
 
-    // Legacy
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY = TextureSlot.create("overlay_texture");
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_CONNECTED = TextureSlot.create("overlay_connected");
-
     public static final TextureSlot OVERLAY_OBSCURED = TextureSlot.create(CTMTextureKeys.OVERLAY_OBSCURED);
-    public static final TextureSlot OVERLAY_TOP = TextureSlot.create("overlay_top");
-    public static final TextureSlot OVERLAY_BOTTOM = TextureSlot.create("overlay_bottom");
-    public static final TextureSlot OVERLAY_SIDE = TextureSlot.create("overlay_side");
-    /**
-     * @deprecated Use HORIZONTAL_* standalone slots. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_HORIZONTAL = TextureSlot.create("overlay_horizontal");
-    /**
-     * @deprecated Use VERTICAL_* standalone slots. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_VERTICAL = TextureSlot.create("overlay_vertical");
-    /**
-     * @deprecated Use MULTIBLOCK_2X2_* or AR_* standalone slots. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_2X2 = TextureSlot.create("overlay_2x2");
-    /**
-     * @deprecated Use MULTIBLOCK_3X3_* standalone slots. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_3X3 = TextureSlot.create("overlay_3x3");
-    /**
-     * @deprecated Use MULTIBLOCK_4X4_* standalone slots. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final TextureSlot OVERLAY_4X4 = TextureSlot.create("overlay_4x4");
-
     public static final TextureSlot EDGES_NONE = TextureSlot.create(CTMTextureKeys.EDGES_NONE);
     public static final TextureSlot EDGES_DIAGONALS_TOP_LEFT_BOTTOM_RIGHT = TextureSlot.create(CTMTextureKeys.EDGES_DIAGONALS_TOP_LEFT_BOTTOM_RIGHT);
     public static final TextureSlot EDGES_DIAGONALS_TOP_RIGHT_BOTTOM_LEFT = TextureSlot.create(CTMTextureKeys.EDGES_DIAGONALS_TOP_RIGHT_BOTTOM_LEFT);

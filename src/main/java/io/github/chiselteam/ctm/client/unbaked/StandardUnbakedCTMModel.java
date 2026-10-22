@@ -18,7 +18,6 @@ import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
@@ -58,23 +57,8 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         var bakedParticle = bakeMaterial(baker, getMaterial(CTMTextureKeys.PARTICLE));
 
         var standardTextures = bakeStandardTextureSet(baker);
-        boolean useStandaloneTextures = standardTextures.isComplete();
-
-        @Deprecated(forRemoval = true, since = "26.1")
-        Material.Baked bakedOverlay = null;
-
-        @Deprecated(forRemoval = true, since = "26.1")
-        Material.Baked bakedOverlayConnected = null;
-
-        if(!useStandaloneTextures) {
-            bakedOverlay = bakeMaterial(baker, getMaterial("overlay_texture"));
-            bakedOverlayConnected = bakeMaterial(baker, getMaterial("overlay_connected"));
-        }
-
         if (bakedParticle == null) {
-            if (bakedBase != null) bakedParticle = bakedBase;
-            else if (useStandaloneTextures) bakedParticle = standardTextures.get(CTMLogic.NONE);
-            else bakedParticle = bakedOverlay;
+            bakedParticle = bakedBase != null ? bakedBase : standardTextures.get(CTMLogic.NONE);
         }
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
@@ -110,16 +94,12 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
                 var qUvs = getRelativeUVs(face, qFrom, qTo);
 
                 if (bakedBase != null) {
-                    var baseFace = new CuboidFace(cull, baseTintIndex, "", CTMLogic.NONE.remapUVs(qUvs), Quadrant.R0);
+                    var baseFace = new CuboidFace(cull, baseTintIndex, "", qUvs, Quadrant.R0);
                     baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
                 var offsets = getOffsets(face, qFrom, qTo);
-                if(useStandaloneTextures) {
-                    bakeStandaloneConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, standardTextures, connQuads[c], unculledFaces);
-                } else {
-                    bakeLegacyConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, bakedOverlay, bakedOverlayConnected, connQuads[c], unculledFaces);
-                }
+                bakeStandaloneConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, standardTextures, connQuads[c], unculledFaces);
             }
 
             if (!baseQuadList.isEmpty()) baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
@@ -138,16 +118,6 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
             var connFace = new CuboidFace(cull, tintIndex, "", uvs, Quadrant.R0);
             if(connFace.cullForDirection() == null) unculledFaces.add(face);
             connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, from, to, connFace, material, face, state, null, shade, emissivity);
-        }
-    }
-
-    private void bakeLegacyConnectedQuads(ModelBaker baker, ModelState state, Direction face, Direction cull, Vector3f from, Vector3f to, CuboidFace.UVs uvs, Material.Baked bakedOverlay, Material.Baked bakedOverlayConnected, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
-        var sprites = new Material.Baked[]{bakedOverlay, bakedOverlayConnected};
-        for(var logic : CTMLogic.values()) {
-            var connFace = new CuboidFace(cull, tintIndex, "", logic.remapUVs(uvs), Quadrant.R0);
-            if(connFace.cullForDirection() == null) unculledFaces.add(face);
-            var atlasState = CTMFaceOrientation.atlasState(state, logic.getU(0) / 16, logic.getV(0) / 16, (logic.getU(16) - logic.getU(0)) / 16);
-            connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, from, to, connFace, logic.chooseMaterial(sprites), face, atlasState, null, shade, emissivity);
         }
     }
 }

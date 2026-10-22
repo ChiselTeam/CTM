@@ -125,7 +125,7 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         }
         Material mat = model.getTopTextureSlots().getMaterial(name);
         if (mat == null) {
-            if (name.equals("base_texture") || name.equals("overlay_texture") || name.equals("overlay_connected")) {
+            if (name.equals("base_texture")) {
                 mat = model.getTopTextureSlots().getMaterial("all");
                 if (mat == null) {
                     mat = model.getTopTextureSlots().getMaterial("layer0");

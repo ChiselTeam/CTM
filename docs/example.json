@@ -2,10 +2,20 @@
   "neoforge:definition_type": "ctm:connected_texture_model",
   "model_location": "example:block/portal_frame",
   "element": {
-    "min": [0.0, 0.0, 0.0],
-    "max": [16.0, 16.0, 16.0]
+    "min": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max": [
+      16.0,
+      16.0,
+      16.0
+    ]
   },
-  "connected_faces": ["all"],
+  "connected_faces": [
+    "all"
+  ],
   "render_overlay_on_all_faces": false,
   "variant": {
     "block": "example:portal_frame",
@@ -19,11 +29,14 @@
   "eldritch": false,
   "texture_slots": {
     "base_texture": "example:block/portal_frame",
-    "overlay_texture": "example:block/portal_edges_unconnected",
-    "overlay_connected": "example:block/portal_edges_connected",
     "overlay_obscured": "example:block/portal_edges_obscured",
     "particle": "example:block/portal_frame",
-    "overlay_moss": "example:block/moss_overlay"
+    "overlay_moss": "example:block/moss_overlay",
+    "standard_none": "example:block/portal_edges_none",
+    "standard_cornerless": "example:block/portal_edges_cornerless",
+    "standard_vertical": "example:block/portal_edges_vertical",
+    "standard_horizontal": "example:block/portal_edges_horizontal",
+    "standard_corner": "example:block/portal_edges_corner"
   },
   "connects_to": [
     {
@@ -36,7 +49,12 @@
   "overlays": [
     {
       "material": "overlay_moss",
-      "faces": ["north", "south", "east", "west"],
+      "faces": [
+        "north",
+        "south",
+        "east",
+        "west"
+      ],
       "conditions": {
         "neighbors": [
           {

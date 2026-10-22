@@ -17,7 +17,6 @@ import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
@@ -67,14 +66,6 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
         var standalone2x2 = textures2x2.isComplete();
         var standalone3x3 = textures3x3.isComplete();
         var standalone4x4 = textures4x4.isComplete();
-
-        Material.Baked legacy2x2 = null;
-        Material.Baked legacy3x3 = null;
-        Material.Baked legacy4x4 = null;
-
-        if (!standalone2x2) legacy2x2 = bakeLegacyTexture(baker, model, "overlay_2x2");
-        if (!standalone3x3) legacy3x3 = bakeLegacyTexture(baker, model, "overlay_3x3");
-        if (!standalone4x4) legacy4x4 = bakeLegacyTexture(baker, model, "overlay_4x4");
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[]> mb2x2Quads = new EnumMap<>(Direction.class);
@@ -161,18 +152,12 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
 
             if (standalone2x2)
                 bakeStandaloneMultiblock(baker, state, face, cull, faceUvs, mb2x2Quads, unculledFaces, textures2x2, offsets);
-            if (legacy2x2 != null)
-                bakeLegacy2x2(baker, state, face, cull, faceUvs, mb2x2Quads, unculledFaces, legacy2x2, offsets);
 
             if (standalone3x3)
                 bakeStandaloneMultiblock(baker, state, face, cull, faceUvs, mb3x3Quads, unculledFaces, textures3x3, offsets);
-            if (legacy3x3 != null)
-                bakeLegacy3x3(baker, state, face, cull, faceUvs, mb3x3Quads, unculledFaces, legacy3x3, offsets);
 
             if (standalone4x4)
                 bakeStandaloneMultiblock(baker, state, face, cull, faceUvs, mb4x4Quads, unculledFaces, textures4x4, offsets);
-            if (legacy4x4 != null)
-                bakeLegacy4x4(baker, state, face, cull, faceUvs, mb4x4Quads, unculledFaces, legacy4x4, offsets);
         }
 
         var bakedOverlays = bakeOverlays();
@@ -262,53 +247,6 @@ public class MultiblockUnbakedCTMModel extends AbstractUnbakedConnectedTextureBl
             if (material == null) continue;
 
             var faceDef = new CuboidFace(cull, tintIndex, "", uvs, Quadrant.R0);
-            if (faceDef.cullForDirection() == null) unculled.add(face);
-
-            quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, material, face, state, null, shade, emissivity);
-        }
-
-        dest.put(face, quads);
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private Material.Baked bakeLegacyTexture(ModelBaker baker, ResolvedModel model, String textureKey) {
-        return bakeMaterial(baker, getMaterial(textureKey));
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private void bakeLegacy2x2(ModelBaker baker, ModelState state, Direction face, Direction cull, CuboidFace.UVs uvs, Map<Direction, BakedQuad[]> dest, Set<Direction> unculled, Material.Baked material, Vector3f[] offsets) {
-        var quads = new BakedQuad[CTMLogic2x2.values().length];
-
-        for (var logic : CTMLogic2x2.values()) {
-            var faceDef = new CuboidFace(cull, tintIndex, "", logic.remapUVs(uvs), Quadrant.R0);
-            if (faceDef.cullForDirection() == null) unculled.add(face);
-
-            quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, material, face, state, null, shade, emissivity);
-        }
-
-        dest.put(face, quads);
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private void bakeLegacy3x3(ModelBaker baker, ModelState state, Direction face, Direction cull, CuboidFace.UVs uvs, Map<Direction, BakedQuad[]> dest, Set<Direction> unculled, Material.Baked material, Vector3f[] offsets) {
-        var quads = new BakedQuad[CTMLogic3x3.values().length];
-
-        for (var logic : CTMLogic3x3.values()) {
-            var faceDef = new CuboidFace(cull, tintIndex, "", logic.remapUVs(uvs), Quadrant.R0);
-            if (faceDef.cullForDirection() == null) unculled.add(face);
-
-            quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, material, face, state, null, shade, emissivity);
-        }
-
-        dest.put(face, quads);
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private void bakeLegacy4x4(ModelBaker baker, ModelState state, Direction face, Direction cull, CuboidFace.UVs uvs, Map<Direction, BakedQuad[]> dest, Set<Direction> unculled, Material.Baked material, Vector3f[] offsets) {
-        var quads = new BakedQuad[CTMLogic4x4.values().length];
-
-        for (var logic : CTMLogic4x4.values()) {
-            var faceDef = new CuboidFace(cull, tintIndex, "", logic.remapUVs(uvs), Quadrant.R0);
             if (faceDef.cullForDirection() == null) unculled.add(face);
 
             quads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], faceDef, material, face, state, null, shade, emissivity);

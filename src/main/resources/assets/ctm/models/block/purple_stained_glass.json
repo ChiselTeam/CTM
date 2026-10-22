@@ -1,7 +1,10 @@
 {
   "textures": {
-    "overlay_connected": "minecraft:block/glass_purple-ctm",
-    "overlay_texture": "minecraft:block/purple_stained_glass",
-    "particle": "minecraft:block/purple_stained_glass"
+    "particle": "minecraft:block/purple_stained_glass",
+    "standard_none": "minecraft:block/purple_stained_glass",
+    "standard_cornerless": "ctm:block/purple_stained_glass_cornerless",
+    "standard_vertical": "ctm:block/purple_stained_glass_vertical",
+    "standard_horizontal": "ctm:block/purple_stained_glass_horizontal",
+    "standard_corner": "ctm:block/purple_stained_glass_corner"
   }
 }

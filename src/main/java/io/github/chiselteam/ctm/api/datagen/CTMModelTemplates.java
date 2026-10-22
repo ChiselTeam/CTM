@@ -16,7 +16,7 @@ public final class CTMModelTemplates {
     private static final Identifier ELDRITCH_LOADER = Identifier.fromNamespaceAndPath("ctm", "eldritch_model");
 
     /**
-     * Standard CTM template: base texture and connected overlay.
+     * Standard CTM template: base texture and five standalone connection states.
      */
     public static final ModelTemplate STANDARD = template(
             CTM_LOADER,
@@ -27,14 +27,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.STANDARD_VERTICAL,
             CTMTextureSlots.STANDARD_HORIZONTAL,
             CTMTextureSlots.STANDARD_CORNER
-    );
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate STANDARD_LEGACY = template(
-            CTM_LOADER,
-            TextureSlot.PARTICLE,
-            CTMTextureSlots.BASE,
-            CTMTextureSlots.OVERLAY_CONNECTED
     );
 
     /**
@@ -60,12 +52,6 @@ public final class CTMModelTemplates {
     );
 
     /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate TBS_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, TextureSlot.TOP, TextureSlot.BOTTOM, TextureSlot.SIDE, CTMTextureSlots.OVERLAY_CONNECTED);
-
-    /**
      * Horizontal CTM template: base texture and four standalone horizontal states.
      */
     public static final ModelTemplate HORIZONTAL = template(
@@ -75,12 +61,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.HORIZONTAL_LEFT,
             CTMTextureSlots.HORIZONTAL_RIGHT
     );
-
-    /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate HORIZONTAL_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_HORIZONTAL);
 
     /**
      * Vertical CTM template: base texture and four standalone vertical states.
@@ -94,12 +74,6 @@ public final class CTMModelTemplates {
     );
 
     /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate VERTICAL_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_VERTICAL);
-
-    /**
      * Multiblock CTM templates: base texture and standalone cells in row-major order.
      */
     public static final ModelTemplate MULTIBLOCK_2X2 = template(
@@ -110,11 +84,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.MULTIBLOCK_2X2_BOTTOM_RIGHT
     );
 
-    /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate MULTIBLOCK_2X2_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_2X2);
     public static final ModelTemplate MULTIBLOCK_3X3 = template(
             CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
             CTMTextureSlots.MULTIBLOCK_3X3_TOP_LEFT,
@@ -128,11 +97,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.MULTIBLOCK_3X3_BOTTOM_RIGHT
     );
 
-    /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate MULTIBLOCK_3X3_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_3X3);
     public static final ModelTemplate MULTIBLOCK_4X4 = template(
             CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE,
             CTMTextureSlots.MULTIBLOCK_4X4_ROW_0_COLUMN_0,
@@ -154,12 +118,6 @@ public final class CTMModelTemplates {
     );
 
     /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate MULTIBLOCK_4X4_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY_4X4);
-
-    /**
      * Anti-repeat (AR) template: base texture and four standalone variants.
      */
     public static final ModelTemplate AR = template(
@@ -169,12 +127,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.AR_3,
             CTMTextureSlots.AR_4
     );
-
-    /**
-     * @deprecated Replaced by standalone textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate AR_LEGACY = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY);
 
     public static final ModelTemplate EDGES = template(CTM_LOADER, TextureSlot.PARTICLE, CTMTextureSlots.BASE, CTMTextureSlots.STANDARD_NONE, CTMTextureSlots.STANDARD_CORNERLESS, CTMTextureSlots.STANDARD_VERTICAL, CTMTextureSlots.STANDARD_HORIZONTAL, CTMTextureSlots.STANDARD_CORNER, CTMTextureSlots.OVERLAY_OBSCURED);
 
@@ -197,18 +149,6 @@ public final class CTMModelTemplates {
             CTMTextureSlots.EDGES_CORNER_TOP_LEFT,
             CTMTextureSlots.EDGES_BOTTOM_LEFT
     );
-
-    /**
-     * @deprecated Replaced by standalone Standard-state textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate EDGES_LEGACY = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, CTMTextureSlots.OVERLAY_OBSCURED, TextureSlot.PARTICLE);
-
-    /**
-     * @deprecated Replaced by standalone edge-state textures. Remove in 27.1.
-     */
-    @Deprecated(forRemoval = true, since = "26.1")
-    public static final ModelTemplate EDGES_FULL_LEGACY = template(CTM_LOADER, CTMTextureSlots.BASE, CTMTextureSlots.OVERLAY, CTMTextureSlots.OVERLAY_CONNECTED, TextureSlot.PARTICLE);
 
     private static ModelTemplate template(Identifier loader, TextureSlot... requiredSlots) {
         return new ModelTemplate(Optional.empty(), Optional.of(loader.toString()), requiredSlots);

@@ -155,7 +155,7 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
      * Creates a builder for a full-face-edge CTM model.
      *
      * <p>EDGES_FULL chooses one of sixteen edge-state textures for the complete face.
-     * Incomplete standalone sets fall back to the legacy 4x4 sheet until 27.1.
+     * Supply all sixteen standalone edge-state textures.
      */
     public static CTMModelBuilder edgesFull(
             Block block,
@@ -276,7 +276,6 @@ public class CTMModelBuilder extends CustomBlockStateModelBuilder {
                 Identifier.fromNamespaceAndPath(namespace, "%s_corner".formatted(path))
         );
     }
-
 
     /**
      * Supplies horizontal standalone textures in the listed parameter order.

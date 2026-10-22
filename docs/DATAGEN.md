@@ -22,12 +22,15 @@ Datagen normally performs two separate jobs:
 public void registerModels(BlockModelGenerators blockModels) {
     Block block = MyBlocks.CONNECTED_BLOCK.get();
     Identifier base = Identifier.fromNamespaceAndPath("my_mod", "block/connected_block");
-    Identifier connected = Identifier.fromNamespaceAndPath("my_mod", "block/connected_block_ctm");
 
     TextureMapping textures = new TextureMapping()
             .put(TextureSlot.PARTICLE, base)
             .put(CTMTextureSlots.BASE, base)
-            .put(CTMTextureSlots.OVERLAY_CONNECTED, connected);
+            .put(CTMTextureSlots.STANDARD_NONE, Identifier.fromNamespaceAndPath("my_mod", "block/connected_none"))
+            .put(CTMTextureSlots.STANDARD_CORNERLESS, Identifier.fromNamespaceAndPath("my_mod", "block/connected_cornerless"))
+            .put(CTMTextureSlots.STANDARD_VERTICAL, Identifier.fromNamespaceAndPath("my_mod", "block/connected_vertical"))
+            .put(CTMTextureSlots.STANDARD_HORIZONTAL, Identifier.fromNamespaceAndPath("my_mod", "block/connected_horizontal"))
+            .put(CTMTextureSlots.STANDARD_CORNER, Identifier.fromNamespaceAndPath("my_mod", "block/connected_corner"));
 
     Identifier modelLocation = CTMModelTemplates.STANDARD.create(block, textures, blockModels.modelOutput);
 
@@ -55,52 +58,37 @@ The `modelLocation` returned by the template is written to the CTM definition's 
 ```java
 CTMModelBuilder builder = CTMModelBuilder.standard(block, modelLocation)
         .texture(CTMTextureKeys.BASE, base)
-        .texture(CTMTextureKeys.OVERLAY, unconnected)
-        .texture(CTMTextureKeys.OVERLAY_CONNECTED, connected)
+        .texture(CTMTextureKeys.STANDARD_NONE, Identifier.fromNamespaceAndPath("my_mod", "block/state_none"))
+        .texture(CTMTextureKeys.STANDARD_CORNERLESS, Identifier.fromNamespaceAndPath("my_mod", "block/state_cornerless"))
+        .texture(CTMTextureKeys.STANDARD_VERTICAL, Identifier.fromNamespaceAndPath("my_mod", "block/state_vertical"))
+        .texture(CTMTextureKeys.STANDARD_HORIZONTAL, Identifier.fromNamespaceAndPath("my_mod", "block/state_horizontal"))
+        .texture(CTMTextureKeys.STANDARD_CORNER, Identifier.fromNamespaceAndPath("my_mod", "block/state_corner"))
         .texture(CTMTextureKeys.PARTICLE, base);
 ```
 
 ## Layered CTM example
 
-Each layer is a normal `CTMModelBuilder`, so its unconnected and connected
-textures remain independent even when both layers use the same model location.
-Layers are rendered in the order supplied to `layered(...)`, from bottom to
-top. A typical two-layer model uses four textures:
-
-- An unconnected bottom texture
-- A connected bottom texture or CTM atlas
-- An unconnected top texture
-- A connected top texture or CTM atlas
+Each layer is a normal `CTMModelBuilder` and supplies its own five standalone
+state textures. Layers render in the order passed to `layered(...)`.
 
 ```java
-public void createLayeredModel(Block block, Identifier modelLocation, BlockModelGenerators blockModels) {
-    Identifier bottomTexture = Identifier.fromNamespaceAndPath("my_mod", "block/layer_bottom");
-    Identifier bottomConnected = Identifier.fromNamespaceAndPath("my_mod", "block/layer_bottom_ctm");
-    Identifier topTexture = Identifier.fromNamespaceAndPath("my_mod", "block/layer_top");
-    Identifier topConnected = Identifier.fromNamespaceAndPath("my_mod", "block/layer_top_ctm");
+CTMModelBuilder bottom = CTMModelBuilder.standard(block, modelLocation)
+        .allFaces()
+        .standardTextures(bottomNone, bottomCornerless, bottomVertical, bottomHorizontal, bottomCorner)
+        .texture(CTMTextureKeys.PARTICLE, bottomNone);
 
-    CTMModelBuilder bottom = CTMModelBuilder.standard(block, modelLocation)
-            .allFaces()
-            .texture(CTMTextureKeys.OVERLAY, bottomTexture)
-            .texture(CTMTextureKeys.OVERLAY_CONNECTED, bottomConnected)
-            .texture(CTMTextureKeys.PARTICLE, bottomTexture);
+CTMModelBuilder top = CTMModelBuilder.standard(block, modelLocation)
+        .allFaces()
+        .waterOffset(true)
+        .standardTextures(topNone, topCornerless, topVertical, topHorizontal, topCorner)
+        .texture(CTMTextureKeys.PARTICLE, topNone);
 
-    CTMModelBuilder top = CTMModelBuilder.standard(block, modelLocation)
-            .allFaces()
-            .waterOffset(true)
-            .texture(CTMTextureKeys.OVERLAY, topTexture)
-            .texture(CTMTextureKeys.OVERLAY_CONNECTED, topConnected)
-            .texture(CTMTextureKeys.PARTICLE, topTexture);
-
-    LayeredCTMModelBuilder layered = CTMModelBuilder.layered(bottom, top);
-    blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, layered));
-}
+blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block,
+        CTMModelBuilder.layered(bottom, top)));
 ```
 
-The top textures normally contain transparency so the bottom layer remains
-visible. `waterOffset(true)` moves the top geometry slightly outward to avoid
-z-fighting. It does not affect the layer's connection calculation. Each layer
-may also use a different CTM kind, face set, or connection predicate.
+The top textures should contain transparency where the bottom layer must remain
+visible. Each layer may use its own kind, faces, and connection predicate.
 
 ## Available builder factories
 
@@ -172,7 +160,7 @@ builder.overlay(rule);
 
 ```java
 builder.texture(CTMTextureKeys.BASE, baseTexture);
-builder.texture(CTMTextureKeys.OVERLAY_CONNECTED, connectedTexture);
+builder.standardTextures(none, cornerless, vertical, horizontal, corner);
 ```
 
 ## Model templates
@@ -181,80 +169,51 @@ The current `CTMModelTemplates` class includes:
 
 | Template | Required slots |
 |---|---|
-| `STANDARD` | `particle`, `base_texture`, `overlay_connected` |
-| `TBS` | `particle`, `top`, `bottom`, `side`, `overlay_connected` |
-| `HORIZONTAL` | `particle`, `base_texture`, `overlay_horizontal` |
-| `VERTICAL` | `particle`, `base_texture`, `overlay_vertical` |
-| `MULTIBLOCK_2X2` | `particle`, `base_texture`, `overlay_2x2` |
-| `MULTIBLOCK_3X3` | `particle`, `base_texture`, `overlay_3x3` |
-| `MULTIBLOCK_4X4` | `particle`, `base_texture`, `overlay_4x4` |
-| `AR` | `particle`, `base_texture`, `overlay_texture` |
-| `EDGES` | `particle`, `base_texture`, `overlay_texture`, `overlay_connected`, `overlay_obscured` |
-| `EDGES_FULL` | `particle`, `base_texture`, `overlay_texture`, `overlay_connected` |
+| `STANDARD` | `particle`, `base_texture`, five `standard_*` states |
+| `TBS` | `particle`, `base_texture`, fifteen `standard_top_*` / `standard_bottom_*` / `standard_side_*` states |
+| `HORIZONTAL` | `particle`, `base_texture`, four `horizontal_*` states |
+| `VERTICAL` | `particle`, `base_texture`, four `vertical_*` states |
+| `MULTIBLOCK_2X2` | `particle`, `base_texture`, four `multiblock_2x2_*` cells |
+| `MULTIBLOCK_3X3` | `particle`, `base_texture`, nine `multiblock_3x3_*` cells |
+| `MULTIBLOCK_4X4` | `particle`, `base_texture`, sixteen `multiblock_4x4_*` cells |
+| `AR` | `particle`, `base_texture`, `ar_1` through `ar_4` |
+| `EDGES` | `particle`, `base_texture`, five `standard_*` states, `overlay_obscured` |
+| `EDGES_FULL` | `particle`, `base_texture`, sixteen `edges_*` states |
 
-A template declares required texture slots for datagen. Runtime model implementations may support additional fallback slots that are not represented by a particular template.
+Templates require the listed slots at generation time. Runtime base layers are
+optional. The `*_LEGACY` templates and texture-sheet slots have been removed.
 
 ## Edges example
 
-Regular `edges` uses independent quadrant selection and optionally supports a special obscured-face texture.
+Regular `edges` uses five standalone states, plus an optional obscured material.
 
 ```java
-public void createEdges(Block block, BlockModelGenerators blockModels) {
-    Identifier base = Identifier.fromNamespaceAndPath("my_mod", "block/portal_frame");
-    Identifier unconnected = Identifier.fromNamespaceAndPath("my_mod", "block/portal_edges_unconnected");
-    Identifier connected = Identifier.fromNamespaceAndPath("my_mod", "block/portal_edges_connected");
-    Identifier obscured = Identifier.fromNamespaceAndPath("my_mod", "block/portal_edges_obscured");
+CTMModelBuilder builder = CTMModelBuilder.edges(block, modelLocation)
+        .allFaces()
+        .standardTextures(none, cornerless, vertical, horizontal, corner)
+        .texture(CTMTextureKeys.OVERLAY_OBSCURED, obscured)
+        .connectionPredicate(CTMBlockPredicate.any(
+                CTMBlockPredicate.block(block),
+                CTMBlockPredicate.block(Blocks.NETHER_PORTAL)));
 
-    TextureMapping textures = new TextureMapping()
-            .put(TextureSlot.PARTICLE, base)
-            .put(CTMTextureSlots.BASE, base)
-            .put(CTMTextureSlots.OVERLAY, unconnected)
-            .put(CTMTextureSlots.OVERLAY_CONNECTED, connected)
-            .put(CTMTextureSlots.OVERLAY_OBSCURED, obscured);
-
-    Identifier modelLocation = CTMModelTemplates.EDGES.create(block, textures, blockModels.modelOutput);
-
-    CTMBlockPredicate connectsTo = CTMBlockPredicate.any(
-            CTMBlockPredicate.block(block),
-            CTMBlockPredicate.block(Blocks.NETHER_PORTAL)
-    );
-
-    CTMModelBuilder builder = CTMModelBuilder.edges(block, modelLocation)
-            .connectionPredicate(connectsTo);
-
-    for (Direction direction : Direction.values())
-        builder.connectedFace(direction);
-
-    blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, builder));
-}
+blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, builder));
 ```
 
-Including `block` in the explicit predicate preserves frame-to-frame connections. Omitting it means the model connects only to the other listed blocks.
+Including the block itself preserves frame-to-frame connections.
 
 ## Edges Full example
 
-`edges_full` maps one cell of a 4×4 connected atlas across the complete face.
+`edges_full` chooses among sixteen independent full-face textures. Supply the
+states in the order accepted by `edgesFullTextures(...)`:
 
 ```java
-public void createEdgesFull(Block block, BlockModelGenerators blockModels) {
-    Identifier base = Identifier.fromNamespaceAndPath("my_mod", "block/frame");
-    Identifier defaultEdges = Identifier.fromNamespaceAndPath("my_mod", "block/edges_default");
-    Identifier atlas = Identifier.fromNamespaceAndPath("my_mod", "block/edges_full_atlas");
+CTMModelBuilder builder = CTMModelBuilder.edgesFull(block, modelLocation)
+        .allFaces()
+        .edgesFullTextures(none, diagonalsTopLeftBottomRight, diagonalsTopRightBottomLeft,
+                topLeft, cornerBottomRight, bottom, cornerBottomLeft, topRight,
+                right, all, left, rightBottom, cornerTopRight, top, cornerTopLeft, bottomLeft);
 
-    TextureMapping textures = new TextureMapping()
-            .put(TextureSlot.PARTICLE, base)
-            .put(CTMTextureSlots.BASE, base)
-            .put(CTMTextureSlots.OVERLAY, defaultEdges)
-            .put(CTMTextureSlots.OVERLAY_CONNECTED, atlas);
-
-    Identifier modelLocation = CTMModelTemplates.EDGES_FULL.create(block, textures, blockModels.modelOutput);
-    CTMModelBuilder builder = CTMModelBuilder.edgesFull(block, modelLocation);
-
-    for (Direction direction : Direction.values())
-        builder.connectedFace(direction);
-
-    blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, builder));
-}
+blockModels.blockStateOutput.accept(CTMBlockStateGenerator.of(block, builder));
 ```
 
 ## Custom connection predicates

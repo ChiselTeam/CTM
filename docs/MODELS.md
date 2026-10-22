@@ -28,8 +28,11 @@ independently; layers may use different `kind`, `connected_faces`, and
         "kind": "standard"
       },
       "texture_slots": {
-        "overlay_texture": "my_mod:block/bottom_unconnected",
-        "overlay_connected": "my_mod:block/bottom_connected",
+        "standard_none": "my_mod:block/bottom_unconnected_none",
+        "standard_cornerless": "my_mod:block/bottom_unconnected_cornerless",
+        "standard_vertical": "my_mod:block/bottom_unconnected_vertical",
+        "standard_horizontal": "my_mod:block/bottom_unconnected_horizontal",
+        "standard_corner": "my_mod:block/bottom_unconnected_corner",
         "particle": "my_mod:block/bottom_unconnected"
       }
     },
@@ -42,8 +45,11 @@ independently; layers may use different `kind`, `connected_faces`, and
         "water_offset": true
       },
       "texture_slots": {
-        "overlay_texture": "my_mod:block/top_unconnected",
-        "overlay_connected": "my_mod:block/top_connected",
+        "standard_none": "my_mod:block/top_unconnected_none",
+        "standard_cornerless": "my_mod:block/top_unconnected_cornerless",
+        "standard_vertical": "my_mod:block/top_unconnected_vertical",
+        "standard_horizontal": "my_mod:block/top_unconnected_horizontal",
+        "standard_corner": "my_mod:block/top_unconnected_corner",
         "particle": "my_mod:block/top_unconnected"
       },
       "connects_to": [
@@ -98,8 +104,11 @@ the first layer, while material flags are combined from every layer.
   "eldritch": false,
   "texture_slots": {
     "base_texture": "my_mod:block/connected_block",
-    "overlay_texture": "my_mod:block/connected_block",
-    "overlay_connected": "my_mod:block/connected_block_ctm",
+    "standard_none": "my_mod:block/connected_block_none",
+    "standard_cornerless": "my_mod:block/connected_block_cornerless",
+    "standard_vertical": "my_mod:block/connected_block_vertical",
+    "standard_horizontal": "my_mod:block/connected_block_horizontal",
+    "standard_corner": "my_mod:block/connected_block_corner",
     "particle": "my_mod:block/connected_block"
   },
   "connects_to": [
@@ -178,25 +187,18 @@ Required.
 
 ## Supported CTM kinds
 
-| Kind | Behavior | Primary overlay slot |
+| Kind | Behavior | Standalone texture slots |
 |---|---|---|
-| `standard` | Standard four-quadrant CTM | `overlay_connected` |
-| `tbs` | Separate top, bottom, and side CTM | `overlay_top_connected`, `overlay_bottom_connected`, `overlay_side_connected` |
-| `ar` | Deterministic anti-repeat 2×2 selection | `overlay_2x2` |
-| `bookshelf` | Horizontal bookshelf-style connection on horizontal faces | `overlay_horizontal` |
-| `ctmh` | Horizontal directional CTM | `overlay_horizontal` |
-| `ctmv` | Vertical directional CTM | `overlay_vertical` |
-| `edges` | Four-quadrant edge CTM with obscured-face support | `overlay_connected` |
-| `edges_full` | Selects one cell from a 4×4 atlas and stretches it over the full face | `overlay_connected` |
-| `multiblock_2x2` | Fixed 2×2 tiling | `overlay_2x2` |
-| `multiblock_3x3` | Fixed 3×3 tiling | `overlay_3x3` |
-| `multiblock_4x4` | Fixed 4×4 tiling | `overlay_4x4` |
-| `v4` | Deterministic provider-based 2×2 multiblock | `overlay_2x2` |
-| `v9` | Deterministic provider-based 3×3 multiblock | `overlay_3x3` |
-| `v16` | Deterministic provider-based 4×4 multiblock | `overlay_4x4` |
-| `r4` | Random per-position 2×2 multiblock | `overlay_2x2` |
-| `r9` | Random per-position 3×3 multiblock | `overlay_3x3` |
-| `r16` | Random per-position 4×4 multiblock | `overlay_4x4` |
+| `standard` | Four-quadrant CTM | Five `standard_*` states |
+| `tbs` | Separate top, bottom, and side CTM | Five states each for `standard_top_*`, `standard_bottom_*`, `standard_side_*` |
+| `ar` | Deterministic anti-repeat selection | `ar_1` through `ar_4` |
+| `bookshelf`, `ctmh` | Horizontal connections on horizontal faces | `horizontal_none`, `horizontal_both`, `horizontal_left`, `horizontal_right` |
+| `ctmv` | Vertical connections on horizontal faces | `vertical_none`, `vertical_both`, `vertical_top`, `vertical_bottom` |
+| `edges` | Four-quadrant edge CTM with obscured-face support | Five `standard_*` states; optional `overlay_obscured` |
+| `edges_full` | One of sixteen full-face edge states | Sixteen `edges_*` states |
+| `multiblock_2x2`, `v4`, `r4` | Fixed, provider-based, or random 2x2 tiling | Four `multiblock_2x2_*` cells |
+| `multiblock_3x3`, `v9`, `r9` | Fixed, provider-based, or random 3x3 tiling | Nine `multiblock_3x3_*` cells |
+| `multiblock_4x4`, `v16`, `r16` | Fixed, provider-based, or random 4x4 tiling | Sixteen `multiblock_4x4_row_N_column_N` cells |
 
 ## Tint, emissivity, and effects
 
@@ -218,107 +220,59 @@ The JSON field is `tint_index`, not `tintIndex`.
 ```json
 "texture_slots": {
   "base_texture": "my_mod:block/base",
-  "overlay_texture": "my_mod:block/unconnected",
-  "overlay_connected": "my_mod:block/connected",
+  "standard_none": "my_mod:block/unconnected_none",
+  "standard_cornerless": "my_mod:block/unconnected_cornerless",
+  "standard_vertical": "my_mod:block/unconnected_vertical",
+  "standard_horizontal": "my_mod:block/unconnected_horizontal",
+  "standard_corner": "my_mod:block/unconnected_corner",
   "particle": "my_mod:block/base"
 }
 ```
 
 ### Common slots
 
-- `base_texture`
-- `overlay_texture`
-- `overlay_connected`
-- `overlay_obscured`
-- `overlay_top`
-- `overlay_bottom`
-- `overlay_side`
-- `overlay_top_connected`
-- `overlay_bottom_connected`
-- `overlay_side_connected`
-- `overlay_horizontal`
-- `overlay_vertical`
-- `overlay_2x2`
-- `overlay_3x3`
-- `overlay_4x4`
-- `top`
-- `bottom`
-- `side`
-- `particle`
-- `layer0` and `layer1` as compatibility fallbacks in supported model types
+- `base_texture`: Optional base layer; model `all` and `layer0` slots remain base fallbacks.
+- `particle`: Optional particle texture; defaults to an available base or state texture.
+- `top`, `bottom`, `side`: Face-specific base textures for TBS (`top` and `bottom` also apply to directional CTM).
+- `overlay_obscured`: Optional obscured-face material for regular `edges`.
+- Standalone state slots listed in the table above.
 
-Custom overlay materials may use any additional slot name.
+Custom conditional overlay materials may use any additional slot name.
 
 ## Texture expectations by model type
 
+Each connection state uses a separate texture. Supply the complete state set for
+the selected kind. Legacy texture sheets and their UV remapping have been removed.
+
 ### Standard
 
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/base",
-  "overlay_texture": "my_mod:block/unconnected",
-  "overlay_connected": "my_mod:block/connected",
-  "particle": "my_mod:block/base"
-}
-```
-
-`base_texture` is optional if the overlay is intended to provide the entire visible texture. The standard implementation also recognizes `layer0` and `layer1` as fallbacks.
+The five slots are `standard_none`, `standard_cornerless`, `standard_vertical`,
+`standard_horizontal`, and `standard_corner`. Each texture uses the model's
+original UV coordinates; no sheet subdivision is applied. `base_texture` may be
+omitted when the state textures provide the entire visible surface.
 
 ### TBS
 
-TBS accepts face-specific base and connected overlay textures:
-
-```json
-"texture_slots": {
-  "top": "my_mod:block/top",
-  "bottom": "my_mod:block/bottom",
-  "side": "my_mod:block/side",
-  "overlay_top": "my_mod:block/top_unconnected",
-  "overlay_bottom": "my_mod:block/bottom_unconnected",
-  "overlay_side": "my_mod:block/side_unconnected",
-  "overlay_top_connected": "my_mod:block/top_connected",
-  "overlay_bottom_connected": "my_mod:block/bottom_connected",
-  "overlay_side_connected": "my_mod:block/side_connected",
-  "particle": "my_mod:block/side"
-}
-```
-
-General `base_texture`, `overlay_texture`, and `overlay_connected` slots are used as fallbacks where supported.
+Supply those five states for each face group, using `standard_top_*`,
+`standard_bottom_*`, and `standard_side_*`. For example, `standard_top_none`
+and `standard_top_corner` select the unconnected and corner states of the top face.
+Optional `top`, `bottom`, and `side` base textures fall back to `base_texture`.
 
 ### Edges
 
-Regular `edges` splits the face into four quadrants and selects each quadrant independently.
+Regular `edges` uses the same five standalone states as Standard, selecting each
+quadrant independently. The optional full-face `overlay_obscured` texture is used
+when a matching block covers the rendered face; it defaults to `standard_none`.
 
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/frame",
-  "overlay_texture": "my_mod:block/edges_unconnected",
-  "overlay_connected": "my_mod:block/edges_connected",
-  "overlay_obscured": "my_mod:block/edges_obscured",
-  "particle": "my_mod:block/frame"
-}
-```
-
-- `overlay_texture`: Unconnected/default edge texture.
-- `overlay_connected`: Connected edge texture.
-- `overlay_obscured`: Optional full-face texture used when a matching block directly covers the rendered face. It falls back to `overlay_texture`.
-
-Edges checks connections in the rendered face plane and one block in front of that plane. This allows a frame block to connect to geometry occupying the framed opening, such as an active portal, without treating an empty opening as connected.
+Edges checks connections in the rendered face plane and one block in front of
+that plane, allowing a frame to connect to geometry occupying its opening.
 
 ### Edges Full
 
-`edges_full` uses a 4×4 atlas in `overlay_connected`. One 4×4-pixel cell of a 16×16 texture is stretched over the full block face.
-
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/frame",
-  "overlay_texture": "my_mod:block/edges_default",
-  "overlay_connected": "my_mod:block/edges_full_atlas",
-  "particle": "my_mod:block/frame"
-}
-```
-
-`overlay_texture` is used for the no-connection pattern. Obscured faces use the connected atlas's center/full pattern; `overlay_obscured` is not used by `edges_full`.
+`edges_full` uses sixteen separate `edges_*` textures, each covering a whole face.
+Use `CTMModelBuilder.edgesFullTextures(...)` to supply the full state set in lookup
+order, or the constants in `CTMTextureKeys`. `edges_none` is the unconnected state;
+obscured faces use `edges_all`. `overlay_obscured` is unused for this kind.
 
 ## Custom connection rules: `connects_to`
 

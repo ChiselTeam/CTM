@@ -64,13 +64,9 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         var textures = bakeTextures(baker);
         var useStandaloneTextures = textures.isComplete();
 
-        Material.Baked legacyOverlay = null;
-        if (!useStandaloneTextures) legacyOverlay = bakeLegacyOverlay(baker);
-
         if (bakedParticle == null) {
             if (bakedBase != null) bakedParticle = bakedBase;
             else if (useStandaloneTextures) bakedParticle = textures.get(CTMLogicAR.T0);
-            else bakedParticle = legacyOverlay;
         }
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
@@ -117,8 +113,6 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
 
                 if (useStandaloneTextures) {
                     bakeQuads(baker, face, cull, qUvs, offsets, textures, connQuads[cornerIndex], unculledFaces);
-                } else if (legacyOverlay != null) {
-                    bakeLegacyARQuads(baker, face, cull, qUvs, offsets, legacyOverlay, connQuads[cornerIndex], unculledFaces);
                 }
             }
 
@@ -151,15 +145,6 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         return textures;
     }
 
-    @Deprecated(forRemoval = true, since = "26.1")
-    private Material.Baked bakeLegacyOverlay(ModelBaker baker) {
-        Material overlay = getMaterial("overlay_2x2");
-        if (overlay == null) overlay = getMaterial("overlay_texture");
-        if (overlay == null) overlay = getMaterial("layer1");
-
-        return bakeMaterial(baker, overlay);
-    }
-
     private void bakeQuads(ModelBaker baker, Direction face, Direction cull, CuboidFace.UVs faceUVs, Vector3f[] offsets, CTMTextureSet<CTMLogicAR> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
         for (var logic : CTMLogicAR.values()) {
             var mat = textures.get(logic);
@@ -169,33 +154,6 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
             if (connFace.cullForDirection() == null) unculledFaces.add(face);
 
             connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, mat, face, state, null, shade, emissivity);
-        }
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private void bakeLegacyARQuads(ModelBaker baker, Direction face, Direction cull, CuboidFace.UVs qUvs, Vector3f[] offsets, Material.Baked material, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
-        int[][] arUVs = {
-                {0, 0},
-                {16, 0},
-                {0, 16},
-                {16, 16}
-        };
-
-        for (int i = 0; i < arUVs.length; i++) {
-            int u = arUVs[i][0];
-            int v = arUVs[i][1];
-
-            var arUvs = new CuboidFace.UVs(
-                    (u + qUvs.minU()) / 2.0F,
-                    (v + qUvs.minV()) / 2.0F,
-                    (u + qUvs.maxU()) / 2.0F,
-                    (v + qUvs.maxV()) / 2.0F
-            );
-
-            var connFace = new CuboidFace(cull, tintIndex, "", arUvs, Quadrant.R0);
-            if (connFace.cullForDirection() == null) unculledFaces.add(face);
-
-            connQuads[i] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, material, face, state, null, shade, emissivity);
         }
     }
 }
