@@ -9,8 +9,7 @@ import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
-import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
-import io.github.chiselteam.ctm.impl.texture.StandardCTMOverlayTable;
+import io.github.chiselteam.ctm.impl.texture.CTMFaceOrientation;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -19,31 +18,31 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Baked model implementation shared by EDGES and EDGES_FULL.
- *
- * <p>EDGES renders four independently selected CTM quadrants.
- * EDGES_FULL selects one of sixteen pre-baked full-face states. The baker
- * supplies standalone sprites or legacy sheet cells in the same order.</p>
- */
 public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlockStateModel<EdgesCTMKey> {
 
     private static final int CONNECTION_MASK = EdgesCTMKey.TOP | EdgesCTMKey.RIGHT | EdgesCTMKey.BOTTOM | EdgesCTMKey.LEFT | EdgesCTMKey.TOP_LEFT | EdgesCTMKey.TOP_RIGHT | EdgesCTMKey.BOTTOM_RIGHT | EdgesCTMKey.BOTTOM_LEFT;
 
     private final CTMKind kind;
-    private final StandardCTMOverlayTable regularOverlayTable;
+    private final CTMFaceOrientation orientation;
+    private final Map<Direction, BakedQuad[][]> regularConnectedQuads;
     private final Map<Direction, BakedQuad[]> fullAtlasQuads;
     private final Map<Direction, BakedQuad[]> obscuredQuads;
     private final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
     public EdgesCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> regularConnectedQuads, Map<Direction, BakedQuad[]> fullAtlasQuads, Map<Direction, BakedQuad[]> obscuredQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
+        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, particle, variant, connectionPredicate, overlayRules, ruleQuads, ambientOcclusion, CTMFaceOrientation.IDENTITY);
+    }
+
+    public EdgesCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> regularConnectedQuads, Map<Direction, BakedQuad[]> fullAtlasQuads, Map<Direction, BakedQuad[]> obscuredQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion, CTMFaceOrientation orientation) {
         super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, ruleQuads), ambientOcclusion);
         this.kind = variant.kind();
-        this.regularOverlayTable = new StandardCTMOverlayTable(regularConnectedQuads);
+        this.orientation = orientation;
+        this.regularConnectedQuads = regularConnectedQuads;
         this.fullAtlasQuads = fullAtlasQuads;
         this.obscuredQuads = obscuredQuads;
         this.ruleQuads = ruleQuads;
@@ -61,7 +60,8 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
         super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, ruleQuads));
 
         this.kind = variant.kind();
-        this.regularOverlayTable = new StandardCTMOverlayTable(regularConnectedQuads);
+        this.orientation = CTMFaceOrientation.IDENTITY;
+        this.regularConnectedQuads = regularConnectedQuads;
         this.fullAtlasQuads = fullAtlasQuads;
         this.obscuredQuads = obscuredQuads;
         this.ruleQuads = ruleQuads;
@@ -72,7 +72,6 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
     @Override
     protected EdgesCTMKey computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
                                         RandomSource random) {
-        CTMLogicOrientation orientation = CTMLogicOrientation.of(state);
         return new EdgesCTMKey(
                 computeFace(level, pos, state, Direction.DOWN, orientation),
                 computeFace(level, pos, state, Direction.UP, orientation),
@@ -114,15 +113,14 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
      * bit 8 = obscured
      * </pre>
      */
-    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMLogicOrientation orientation) {
+    private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMFaceOrientation orientation) {
         if (!connectedFaces.contains(face))
             return 0;
 
         if (matches(level, pos, state, face, pos.relative(face)))
             return EdgesCTMKey.OBSCURED;
 
-        Direction[] localDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[orientation.toLocal(face).getAxis().ordinal()];
-        Direction[] directions = java.util.Arrays.stream(localDirections).map(orientation::toWorld).toArray(Direction[]::new);
+        Direction[] directions = orientation.textureDirections(face);
 
         Direction top = directions[0];
         Direction right = directions[1];
@@ -144,22 +142,12 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
         return packed;
     }
 
-    /**
-     * Checks both the neighbor in the current face plane and the neighbor
-     * one block in front of the rendered face.
-     */
     private boolean shouldConnectEdge(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, Direction side) {
         BlockPos sidePos = pos.relative(side);
 
         return matches(level, pos, state, face, sidePos) || matches(level, pos, state, face, sidePos.relative(face));
     }
 
-    /**
-     * A diagonal can connect from either the current face plane or the plane
-     * directly in front.
-     *
-     * <p>At least one adjacent side must be visible in the current plane.</p>
-     */
     private boolean shouldConnectDiagonal(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, Direction sideA, Direction sideB) {
         BlockPos diagonalPos = pos.relative(sideA).relative(sideB);
         boolean diagonalMatches = matches(level, pos, state, face, diagonalPos) || matches(level, pos, state, face, diagonalPos.relative(face));
@@ -196,37 +184,36 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
             return;
         }
 
-        faceQuads.addAll(regularOverlayTable.get(side, regularPatternIndex(packed)));
+        CTMPartBuilder.appendPatternQuads(regularConnectedQuads.get(side), regularPatternIndex(packed, side), faceQuads);
     }
 
     private void appendEdgesFullQuads(int packed, Direction side, List<BakedQuad> faceQuads) {
         CTMPartBuilder.appendIndexedQuad(fullAtlasQuads.get(side), fullAtlasIndex(packed), faceQuads);
     }
 
-    /**
-     * Converts the raw edge connection flags into the four CTMLogic values
-     * expected by StandardCTMOverlayTable.
-     */
-    private static int regularPatternIndex(int packed) {
+    private int regularPatternIndex(int packed, Direction face) {
         boolean top = has(packed, EdgesCTMKey.TOP);
         boolean right = has(packed, EdgesCTMKey.RIGHT);
         boolean bottom = has(packed, EdgesCTMKey.BOTTOM);
         boolean left = has(packed, EdgesCTMKey.LEFT);
 
-        CTMLogic bottomLeft = edgeLogic (bottom, left, has(packed, EdgesCTMKey.BOTTOM_LEFT), false);
-        CTMLogic bottomRight = edgeLogic(bottom, right, has(packed, EdgesCTMKey.BOTTOM_RIGHT), true);
-        CTMLogic topRight = edgeLogic(top, right, has(packed, EdgesCTMKey.TOP_RIGHT), false);
-        CTMLogic topLeft = edgeLogic(top, left, has(packed, EdgesCTMKey.TOP_LEFT), true);
-
-        int logicCount = CTMLogic.values().length;
-
-        return bottomLeft.ordinal() + bottomRight.ordinal() * logicCount + topRight.ordinal() * logicCount * logicCount + topLeft.ordinal() * logicCount * logicCount * logicCount;
+        Direction[] texture = orientation.textureDirections(face);
+        Direction[] corners = orientation.cornerDirections(face);
+        boolean[] sides = {top, right, bottom, left};
+        int[] diagonals = {EdgesCTMKey.TOP_RIGHT, EdgesCTMKey.BOTTOM_RIGHT, EdgesCTMKey.BOTTOM_LEFT, EdgesCTMKey.TOP_LEFT};
+        int pattern = 0;
+        int multiplier = 1;
+        for (int c = 0; c < 4; c++) {
+            int a = Arrays.asList(texture).indexOf(corners[c]);
+            int b = Arrays.asList(texture).indexOf(corners[(c + 1) % 4]);
+            int diagonal = (a + 1) % 4 == b ? a : b;
+            CTMLogic logic = edgeLogic(sides[a], sides[b], has(packed, diagonals[diagonal]), a % 2 == 0);
+            pattern += logic.ordinal() * multiplier;
+            multiplier *= CTMLogic.values().length;
+        }
+        return pattern;
     }
 
-    /**
-     * When only the diagonal is connected, Edges uses the connected corner
-     * submap rather than the normal empty quadrant.
-     */
     private static CTMLogic edgeLogic(boolean sideA, boolean sideB, boolean diagonal,
                                       boolean swapSides) {
         if (!sideA && !sideB && diagonal)
@@ -239,11 +226,6 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
                 : CTMLogic.of(sideA, sideB, joinedCorner);
     }
 
-    /**
-     * Returns the EDGES_FULL output-state index (CTMLogicEdges ordinal).
-     * The historical row-major ordering is retained for both texture formats;
-     * this reduction includes diagonal and obscured states, not just cardinal bits.
-     */
     private static int fullAtlasIndex(int packed) {
         if ((packed & EdgesCTMKey.OBSCURED) != 0)
             return cell(2, 1);

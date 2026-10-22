@@ -11,6 +11,7 @@ import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.EdgesCTMBlockStateModel;
 import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
+import io.github.chiselteam.ctm.impl.texture.CTMFaceOrientation;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.block.dispatch.Variant;
@@ -77,7 +78,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
         for (var face : Direction.values()) {
             var cull = getCullface(face, from, to);
             if (cull == null) unculledFaces.add(face);
-            var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
+            var planeDirections = CTMFaceOrientation.localDirections(face);
             var baseQuadList = new ArrayList<BakedQuad>(4);
             var regularQuads = new BakedQuad[4][CTMLogic.values().length];
 
@@ -137,7 +138,7 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
         }
 
         var bakedOverlays = bakeOverlays();
-        return new EdgesCTMBlockStateModel(remapDirections(connectedFaces, directionQuads), remapDirections(unculledFaces, directionQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(regularConnectedQuads), remapQuadDirections(fullAtlasQuads), remapQuadDirections(obscuredQuads), bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion);
+        return new EdgesCTMBlockStateModel(remapDirections(connectedFaces, directionQuads), remapDirections(unculledFaces, directionQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(regularConnectedQuads), remapQuadDirections(fullAtlasQuads), remapQuadDirections(obscuredQuads), bakedParticle.sprite(), variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, new CTMFaceOrientation(state));
     }
 
     private CTMTextureSet<CTMLogicEdges> bakeEdgesTextureSet(ModelBaker baker) {
@@ -161,7 +162,8 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
     private void bakeLegacyRegularQuads(ModelBaker baker, Vector3f[] bounds, Direction cull, Direction face, CuboidFace.UVs uvs, Material.Baked[] materials, BakedQuad[] quads) {
         if (materials[0] == null) return;
         for (var logic : CTMLogic.values()) {
-            quads[logic.ordinal()] = bakeFace(baker, bounds, cull, face, state, logic.chooseMaterial(materials), logic.remapUVs(uvs));
+            var atlasState = CTMFaceOrientation.atlasState(state, logic.getU(0) / 16, logic.getV(0) / 16, (logic.getU(16) - logic.getU(0)) / 16);
+            quads[logic.ordinal()] = bakeFace(baker, bounds, cull, face, atlasState, logic.chooseMaterial(materials), logic.remapUVs(uvs));
         }
     }
 
@@ -170,7 +172,8 @@ public class EdgesUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockSt
         if (materials[0] != null) atlas[0] = bakeFace(baker, bounds, cull, face, state, materials[0], uvs);
         if (materials[1] == null) return;
         for (var index = 1; index < atlas.length; index++) {
-            atlas[index] = bakeFace(baker, bounds, cull, face, state, materials[1], remapToCell(uvs, index / 4, index % 4));
+            var atlasState = CTMFaceOrientation.atlasState(state, (index % 4) / 4.0F, (index / 4) / 4.0F, 0.25F);
+            atlas[index] = bakeFace(baker, bounds, cull, face, atlasState, materials[1], remapToCell(uvs, index / 4, index % 4));
         }
     }
 

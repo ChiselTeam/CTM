@@ -166,19 +166,18 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
         return ruleQuads;
     }
 
-    /** Rekeys face-indexed data to the direction produced by the baked model transformation. */
     protected <T> Map<Direction, T> remapQuadDirections(Map<Direction, T> quads) {
-        if (modelState.equals(Variant.SimpleModelState.DEFAULT)) return quads;
+        if (state.transformation().isIdentity()) return quads;
         Map<Direction, T> remapped = new EnumMap<>(Direction.class);
         quads.forEach((source, value) -> remapped.put(bakedDirection(source, value), value));
         return remapped;
     }
 
     protected Set<Direction> remapDirections(Set<Direction> directions, Map<Direction, ? extends Object> bakedFaces) {
-        if (modelState.equals(Variant.SimpleModelState.DEFAULT)) return directions;
+        if (state.transformation().isIdentity()) return directions;
         Set<Direction> remapped = EnumSet.noneOf(Direction.class);
-        for (Direction direction : directions) {
-            Object value = bakedFaces.get(direction);
+        for (var direction : directions) {
+            var value = bakedFaces.get(direction);
             remapped.add(bakedDirection(direction, value));
         }
         return remapped;
@@ -190,10 +189,19 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     }
 
     private Direction bakedDirection(Direction fallback, Object value) {
-        BakedQuad quad = value instanceof BakedQuad q ? q
-                : value instanceof BakedQuad[] array ? Arrays.stream(array).filter(Objects::nonNull).findFirst().orElse(null)
-                : null;
-        return quad != null ? quad.direction() : fallback;
+        var quad = firstQuad(value);
+        return quad != null ? quad.direction() : Direction.rotate(state.transformation().getMatrix(), fallback);
+    }
+
+    private static BakedQuad firstQuad(Object value) {
+        if (value instanceof BakedQuad quad) return quad;
+        if (value instanceof Object[] array) {
+            for (Object entry : array) {
+                var quad = firstQuad(entry);
+                if (quad != null) return quad;
+            }
+        }
+        return null;
     }
 
     protected Direction getCullface(Direction direction, Vector3f from, Vector3f to) {

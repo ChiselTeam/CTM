@@ -79,9 +79,9 @@ public enum CTMLogic implements StringRepresentable {
         if (corner) {
             return CORNERLESS;
         } else if (horizontal) {
-            return vertical ? CORNER : HORIZONTAL;
+            return vertical ? CORNER : VERTICAL;
         } else {
-            return vertical ? VERTICAL : NONE;
+            return vertical ? HORIZONTAL : NONE;
         }
     }
 

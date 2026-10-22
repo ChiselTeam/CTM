@@ -10,6 +10,7 @@ import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.TBSCTMBlockStateModel;
 import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
+import io.github.chiselteam.ctm.impl.texture.CTMFaceOrientation;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
@@ -125,7 +126,7 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
 
         for (var face : Direction.values()) {
             var cull = getCullface(face, from, to);
-            var planeDirections = CTMLogic.AXIS_PLANE_DIRECTIONS[face.getAxis().ordinal()];
+            var planeDirections = CTMFaceOrientation.localDirections(face);
 
             var baseQuadList = new ArrayList<BakedQuad>();
             var connQuads = new BakedQuad[4][CTMLogic.values().length];
@@ -194,8 +195,9 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
                         if (connFace.cullForDirection() == null) {
                             unculledFaces.add(face);
                         }
+                        var atlasState = CTMFaceOrientation.atlasState(state, logic.getU(0) / 16, logic.getV(0) / 16, (logic.getU(16) - logic.getU(0)) / 16);
                         connQuads[c][logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1],
-                                connFace, logic.chooseMaterial(sprites), face, state, null, shade, emissivity);
+                                connFace, logic.chooseMaterial(sprites), face, atlasState, null, shade, emissivity);
                     }
                 }
             }
@@ -207,7 +209,7 @@ public class TBSUnbakedCTMModel extends AbstractUnbakedConnectedTextureBlockStat
         }
 
         var bakedOverlays = bakeOverlays();
-        return new TBSCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion);
+        return new TBSCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, new CTMFaceOrientation(state));
     }
 
     private CTMTextureSet<CTMLogic> bakeStandardTextureSet(ModelBaker baker, Direction face) {
