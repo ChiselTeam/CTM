@@ -1,12 +1,24 @@
-# CTM Blockstate Model Format
+# CTM Model Format (Minecraft 1.21.1)
 
-The CTM library uses a NeoForge custom **blockstate model definition**. The CTM definition is placed directly in the block's blockstate JSON file and is identified by:
+CTM uses a NeoForge geometry loader in a **block model JSON**, such as `assets/my_mod/models/block/connected_block_ctm.json`:
 
 ```json
-"neoforge:definition_type": "ctm:connected_texture_model"
+"loader": "ctm:connected_texture_model"
 ```
 
-This is not a vanilla model `loader` field. The `model_location` field points to a separate block model that supplies the texture slots and any model-level properties used while baking.
+An ordinary blockstate references this model:
+
+```json
+{
+  "variants": {
+    "": {
+      "model": "my_mod:block/connected_block_ctm"
+    }
+  }
+}
+```
+
+`model_location` points to a separate texture-source model. It must not point back to the loader model itself. The 26.1.2 root blockstate definition format is not supported by Minecraft 1.21.1.
 
 ## Independently connected texture layers
 
@@ -18,36 +30,48 @@ independently; layers may use different `kind`, `connected_faces`, and
 
 ```json
 {
-  "neoforge:definition_type": "ctm:layered_connected_texture_model",
+  "loader": "ctm:layered_connected_texture_model",
   "layers": [
     {
       "model_location": "my_mod:block/bottom_layer",
-      "connected_faces": ["all"],
+      "connected_faces": [
+        "all"
+      ],
       "variant": {
         "block": "my_mod:layered_block",
         "kind": "standard"
       },
       "texture_slots": {
-        "overlay_texture": "my_mod:block/bottom_unconnected",
-        "overlay_connected": "my_mod:block/bottom_connected",
-        "particle": "my_mod:block/bottom_unconnected"
+        "particle": "my_mod:block/bottom_unconnected",
+        "standard_none": "my_mod:block/bottom_unconnected",
+        "standard_cornerless": "my_mod:block/bottom_connected_cornerless",
+        "standard_vertical": "my_mod:block/bottom_connected_vertical",
+        "standard_horizontal": "my_mod:block/bottom_connected_horizontal",
+        "standard_corner": "my_mod:block/bottom_connected_corner"
       }
     },
     {
       "model_location": "my_mod:block/top_layer",
-      "connected_faces": ["all"],
+      "connected_faces": [
+        "all"
+      ],
       "variant": {
         "block": "my_mod:layered_block",
         "kind": "standard",
         "water_offset": true
       },
       "texture_slots": {
-        "overlay_texture": "my_mod:block/top_unconnected",
-        "overlay_connected": "my_mod:block/top_connected",
-        "particle": "my_mod:block/top_unconnected"
+        "particle": "my_mod:block/top_unconnected",
+        "standard_none": "my_mod:block/top_unconnected",
+        "standard_cornerless": "my_mod:block/top_connected_cornerless",
+        "standard_vertical": "my_mod:block/top_connected_vertical",
+        "standard_horizontal": "my_mod:block/top_connected_horizontal",
+        "standard_corner": "my_mod:block/top_connected_corner"
       },
       "connects_to": [
-        { "id": "my_mod:top_connection_target" }
+        {
+          "id": "my_mod:top_connection_target"
+        }
       ]
     }
   ]
@@ -56,16 +80,17 @@ independently; layers may use different `kind`, `connected_faces`, and
 
 The upper textures should contain transparency wherever the lower layer must
 remain visible. Setting `water_offset` on the upper layer offsets its quads by
-0.01 model units and prevents coplanar z-fighting. Particle material comes from
-the first layer, while material flags are combined from every layer.
+0.01 model units and prevents coplanar z-fighting. The particle texture comes from the first layer. CTM automatically selects render layers per sprite: opaque textures use the solid pass, binary alpha uses cutout, and partial alpha uses the translucent pass. Mixed base layers and overlays are separated in world and inventory rendering. An explicit `render_type` on the outer loader model overrides this automatic selection.
 
 ## Minimal example
 
 ```json
 {
-  "neoforge:definition_type": "ctm:connected_texture_model",
+  "loader": "ctm:connected_texture_model",
   "model_location": "my_mod:block/connected_block",
-  "connected_faces": ["all"],
+  "connected_faces": [
+    "all"
+  ],
   "variant": {
     "block": "my_mod:connected_block",
     "kind": "standard"
@@ -77,13 +102,23 @@ the first layer, while material flags are combined from every layer.
 
 ```json
 {
-  "neoforge:definition_type": "ctm:connected_texture_model",
+  "loader": "ctm:connected_texture_model",
   "model_location": "my_mod:block/connected_block",
   "element": {
-    "min": [0.0, 0.0, 0.0],
-    "max": [16.0, 16.0, 16.0]
+    "min": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max": [
+      16.0,
+      16.0,
+      16.0
+    ]
   },
-  "connected_faces": ["all"],
+  "connected_faces": [
+    "all"
+  ],
   "render_overlay_on_all_faces": false,
   "variant": {
     "block": "my_mod:connected_block",
@@ -98,9 +133,12 @@ the first layer, while material flags are combined from every layer.
   "eldritch": false,
   "texture_slots": {
     "base_texture": "my_mod:block/connected_block",
-    "overlay_texture": "my_mod:block/connected_block",
-    "overlay_connected": "my_mod:block/connected_block_ctm",
-    "particle": "my_mod:block/connected_block"
+    "particle": "my_mod:block/connected_block",
+    "standard_none": "my_mod:block/connected_block",
+    "standard_cornerless": "my_mod:block/connected_block_ctm_cornerless",
+    "standard_vertical": "my_mod:block/connected_block_ctm_vertical",
+    "standard_horizontal": "my_mod:block/connected_block_ctm_horizontal",
+    "standard_corner": "my_mod:block/connected_block_ctm_corner"
   },
   "connects_to": [
     {
@@ -113,7 +151,7 @@ the first layer, while material flags are combined from every layer.
 
 ## Fields
 
-### `neoforge:definition_type`
+### `loader`
 
 Required. Must be:
 
@@ -133,8 +171,16 @@ Optional. Defines the rendered cuboid in model coordinates. The default is a ful
 
 ```json
 {
-  "min": [0.0, 0.0, 0.0],
-  "max": [16.0, 16.0, 16.0]
+  "min": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "max": [
+    16.0,
+    16.0,
+    16.0
+  ]
 }
 ```
 
@@ -178,25 +224,18 @@ Required.
 
 ## Supported CTM kinds
 
-| Kind | Behavior | Primary overlay slot |
+| Kind | Behavior | Required texture states |
 |---|---|---|
-| `standard` | Standard four-quadrant CTM | `overlay_connected` |
-| `tbs` | Separate top, bottom, and side CTM | `overlay_top_connected`, `overlay_bottom_connected`, `overlay_side_connected` |
-| `ar` | Deterministic anti-repeat 2×2 selection | `overlay_2x2` |
-| `bookshelf` | Horizontal bookshelf-style connection on horizontal faces | `overlay_horizontal` |
-| `ctmh` | Horizontal directional CTM | `overlay_horizontal` |
-| `ctmv` | Vertical directional CTM | `overlay_vertical` |
-| `edges` | Four-quadrant edge CTM with obscured-face support | `overlay_connected` |
-| `edges_full` | Selects one cell from a 4×4 atlas and stretches it over the full face | `overlay_connected` |
-| `multiblock_2x2` | Fixed 2×2 tiling | `overlay_2x2` |
-| `multiblock_3x3` | Fixed 3×3 tiling | `overlay_3x3` |
-| `multiblock_4x4` | Fixed 4×4 tiling | `overlay_4x4` |
-| `v4` | Deterministic provider-based 2×2 multiblock | `overlay_2x2` |
-| `v9` | Deterministic provider-based 3×3 multiblock | `overlay_3x3` |
-| `v16` | Deterministic provider-based 4×4 multiblock | `overlay_4x4` |
-| `r4` | Random per-position 2×2 multiblock | `overlay_2x2` |
-| `r9` | Random per-position 3×3 multiblock | `overlay_3x3` |
-| `r16` | Random per-position 4×4 multiblock | `overlay_4x4` |
+| `standard` | Four-quadrant connected textures | Five `standard_*` states |
+| `tbs` | Independent top, bottom and side connections | Five states for each `standard_top_*`, `standard_bottom_*`, `standard_side_*` group |
+| `ar` | Deterministic anti-repeat selection | `ar_1`, `ar_2`, `ar_3`, `ar_4` |
+| `bookshelf`, `ctmh` | Horizontal connections on horizontal faces | `horizontal_none`, `horizontal_both`, `horizontal_left`, `horizontal_right` |
+| `ctmv` | Vertical connections on horizontal faces | `vertical_none`, `vertical_both`, `vertical_top`, `vertical_bottom` |
+| `edges` | Four-quadrant edges with obscured-face support | Five `standard_*` states; optional `overlay_obscured` |
+| `edges_full` | Whole-face edge selection | All sixteen `edges_*` states |
+| `multiblock_2x2`, `v4`, `r4` | Fixed, provider-based or random 2x2 tiling | Four `multiblock_2x2_*` cells |
+| `multiblock_3x3`, `v9`, `r9` | Fixed, provider-based or random 3x3 tiling | Nine `multiblock_3x3_*` cells |
+| `multiblock_4x4`, `v16`, `r16` | Fixed, provider-based or random 4x4 tiling | Sixteen `multiblock_4x4_*` cells |
 
 ## Tint, emissivity, and effects
 
@@ -213,112 +252,45 @@ The JSON field is `tint_index`, not `tintIndex`.
 
 ## Texture slots
 
-`texture_slots` is optional. It can provide or override textures without requiring them to exist in the model referenced by `model_location`.
+Provide textures in the source model's `textures` object or in the loader model's `texture_slots`. All texture states for the selected CTM kind are required. Incomplete sets report the missing states during baking.
+
+`base_texture` is an optional layer beneath the connected textures. `particle` is optional and falls back to a state texture. `top`, `bottom`, and `side` remain available for base layers where supported. Conditional overlays may use any material slot name.
+
+### Standard and regular edges
 
 ```json
-"texture_slots": {
-  "base_texture": "my_mod:block/base",
-  "overlay_texture": "my_mod:block/unconnected",
-  "overlay_connected": "my_mod:block/connected",
-  "particle": "my_mod:block/base"
+{
+  "standard_none": "my_mod:block/frame_none",
+  "standard_cornerless": "my_mod:block/frame_cornerless",
+  "standard_vertical": "my_mod:block/frame_vertical",
+  "standard_horizontal": "my_mod:block/frame_horizontal",
+  "standard_corner": "my_mod:block/frame_corner"
 }
 ```
 
-### Common slots
-
-- `base_texture`
-- `overlay_texture`
-- `overlay_connected`
-- `overlay_obscured`
-- `overlay_top`
-- `overlay_bottom`
-- `overlay_side`
-- `overlay_top_connected`
-- `overlay_bottom_connected`
-- `overlay_side_connected`
-- `overlay_horizontal`
-- `overlay_vertical`
-- `overlay_2x2`
-- `overlay_3x3`
-- `overlay_4x4`
-- `top`
-- `bottom`
-- `side`
-- `particle`
-- `layer0` and `layer1` as compatibility fallbacks in supported model types
-
-Custom overlay materials may use any additional slot name.
-
-## Texture expectations by model type
-
-### Standard
-
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/base",
-  "overlay_texture": "my_mod:block/unconnected",
-  "overlay_connected": "my_mod:block/connected",
-  "particle": "my_mod:block/base"
-}
-```
-
-`base_texture` is optional if the overlay is intended to provide the entire visible texture. The standard implementation also recognizes `layer0` and `layer1` as fallbacks.
+Each state supplies a full texture. Regular `edges` additionally accepts `overlay_obscured`; it defaults to `standard_none`.
 
 ### TBS
 
-TBS accepts face-specific base and connected overlay textures:
-
-```json
-"texture_slots": {
-  "top": "my_mod:block/top",
-  "bottom": "my_mod:block/bottom",
-  "side": "my_mod:block/side",
-  "overlay_top": "my_mod:block/top_unconnected",
-  "overlay_bottom": "my_mod:block/bottom_unconnected",
-  "overlay_side": "my_mod:block/side_unconnected",
-  "overlay_top_connected": "my_mod:block/top_connected",
-  "overlay_bottom_connected": "my_mod:block/bottom_connected",
-  "overlay_side_connected": "my_mod:block/side_connected",
-  "particle": "my_mod:block/side"
-}
-```
-
-General `base_texture`, `overlay_texture`, and `overlay_connected` slots are used as fallbacks where supported.
-
-### Edges
-
-Regular `edges` splits the face into four quadrants and selects each quadrant independently.
-
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/frame",
-  "overlay_texture": "my_mod:block/edges_unconnected",
-  "overlay_connected": "my_mod:block/edges_connected",
-  "overlay_obscured": "my_mod:block/edges_obscured",
-  "particle": "my_mod:block/frame"
-}
-```
-
-- `overlay_texture`: Unconnected/default edge texture.
-- `overlay_connected`: Connected edge texture.
-- `overlay_obscured`: Optional full-face texture used when a matching block directly covers the rendered face. It falls back to `overlay_texture`.
-
-Edges checks connections in the rendered face plane and one block in front of that plane. This allows a frame block to connect to geometry occupying the framed opening, such as an active portal, without treating an empty opening as connected.
+Use the same five suffixes under each of `standard_top_`, `standard_bottom_`, and `standard_side_`. All fifteen states are required.
 
 ### Edges Full
 
-`edges_full` uses a 4×4 atlas in `overlay_connected`. One 4×4-pixel cell of a 16×16 texture is stretched over the full block face.
+Use these sixteen slots:
 
-```json
-"texture_slots": {
-  "base_texture": "my_mod:block/frame",
-  "overlay_texture": "my_mod:block/edges_default",
-  "overlay_connected": "my_mod:block/edges_full_atlas",
-  "particle": "my_mod:block/frame"
-}
+```text
+edges_none, edges_diagonals_top_left_bottom_right,
+edges_diagonals_top_right_bottom_left, edges_top_left,
+edges_corner_bottom_right, edges_bottom, edges_corner_bottom_left,
+edges_top_right, edges_right, edges_all, edges_left, edges_right_bottom,
+edges_corner_top_right, edges_top, edges_corner_top_left, edges_bottom_left
 ```
 
-`overlay_texture` is used for the no-connection pattern. Obscured faces use the connected atlas's center/full pattern; `overlay_obscured` is not used by `edges_full`.
+Each slot supplies a full-face texture. `overlay_obscured` is not used by `edges_full`.
+
+### Removed texture-sheet fallbacks
+
+The deprecated combined-sheet slots, atlas UV remappers, and `*_LEGACY` datagen templates have been removed. Resource packs must supply standalone states. Shared image files can expose individual sprites through Minecraft's `minecraft:unstitch` atlas source; the bundled glass and obsidian models use this standard resource format.
 
 ## Custom connection rules: `connects_to`
 

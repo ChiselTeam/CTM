@@ -9,9 +9,9 @@ import io.github.chiselteam.ctm.api.geometry.StandardCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.CTMFaceOrientation;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -33,39 +33,17 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     }
 
     public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion, CTMFaceOrientation orientation) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, connectedQuads, ruleQuads), ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
         this.connectedQuads = connectedQuads;
         this.ruleQuads = ruleQuads;
         this.orientation = orientation;
     }
 
     public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, connectedQuads, ruleQuads));
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules);
         this.connectedQuads = connectedQuads;
         this.ruleQuads = ruleQuads;
         this.orientation = CTMFaceOrientation.IDENTITY;
-    }
-
-    private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        int flags = 0;
-        for (BakedQuad[] quads : baseQuads.values()) {
-            for (BakedQuad quad : quads) {
-                if (quad != null) flags |= quad.materialInfo().flags();
-            }
-        }
-        for (BakedQuad[][] quads : connectedQuads.values()) {
-            for (BakedQuad[] subQuads : quads) {
-                for (BakedQuad quad : subQuads) {
-                    if (quad != null) flags |= quad.materialInfo().flags();
-                }
-            }
-        }
-        for (Map<Direction, BakedQuad> sideMap : ruleQuads.values()) {
-            for (BakedQuad quad : sideMap.values()) {
-                if (quad != null) flags |= quad.materialInfo().flags();
-            }
-        }
-        return flags;
     }
 
     public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant) {

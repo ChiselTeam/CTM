@@ -1,7 +1,10 @@
 {
   "textures": {
-    "overlay_connected": "minecraft:block/glass_magenta-ctm",
-    "overlay_texture": "minecraft:block/magenta_stained_glass",
-    "particle": "minecraft:block/magenta_stained_glass"
+    "particle": "minecraft:block/magenta_stained_glass",
+    "standard_none": "minecraft:block/magenta_stained_glass",
+    "standard_cornerless": "ctm:block/magenta_stained_glass/standard_cornerless",
+    "standard_vertical": "ctm:block/magenta_stained_glass/standard_vertical",
+    "standard_horizontal": "ctm:block/magenta_stained_glass/standard_horizontal",
+    "standard_corner": "ctm:block/magenta_stained_glass/standard_corner"
   }
 }

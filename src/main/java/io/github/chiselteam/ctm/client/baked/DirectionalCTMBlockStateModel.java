@@ -11,9 +11,9 @@ import io.github.chiselteam.ctm.api.geometry.DirectionalCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -30,7 +30,7 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
     private final Map<Direction, BakedQuad[]> effectiveBaseQuads;
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> horizontalQuads, Map<Direction, BakedQuad[]> verticalQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, horizontalQuads, verticalQuads, ruleQuads), ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
         this.ruleQuads = ruleQuads;
@@ -48,28 +48,11 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
                                          CTMBlockPredicate connectionPredicate,
                                          List<CTMOverlayRule> overlayRules,
                                          Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, horizontalQuads, verticalQuads, ruleQuads));
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
         this.ruleQuads = ruleQuads;
         this.effectiveBaseQuads = computeEffectiveBaseQuads();
-    }
-
-    private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> horizontalQuads, Map<Direction, BakedQuad[]> verticalQuads, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        int flags = 0;
-        for (BakedQuad[] quads : baseQuads.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (BakedQuad[] quads : horizontalQuads.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (BakedQuad[] quads : verticalQuads.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (Map<Direction, BakedQuad> sideMap : ruleQuads.values()) {
-            for (BakedQuad quad : sideMap.values()) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        return flags;
     }
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces,

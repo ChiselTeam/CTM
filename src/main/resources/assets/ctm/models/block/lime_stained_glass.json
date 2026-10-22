@@ -1,7 +1,10 @@
 {
   "textures": {
-    "overlay_connected": "minecraft:block/glass_lime-ctm",
-    "overlay_texture": "minecraft:block/lime_stained_glass",
-    "particle": "minecraft:block/lime_stained_glass"
+    "particle": "minecraft:block/lime_stained_glass",
+    "standard_none": "minecraft:block/lime_stained_glass",
+    "standard_cornerless": "ctm:block/lime_stained_glass/standard_cornerless",
+    "standard_vertical": "ctm:block/lime_stained_glass/standard_vertical",
+    "standard_horizontal": "ctm:block/lime_stained_glass/standard_horizontal",
+    "standard_corner": "ctm:block/lime_stained_glass/standard_corner"
   }
 }

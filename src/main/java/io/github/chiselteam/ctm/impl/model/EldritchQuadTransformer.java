@@ -1,7 +1,6 @@
 package io.github.chiselteam.ctm.impl.model;
 
-import net.minecraft.client.model.geom.builders.UVPair;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -36,19 +35,19 @@ public final class EldritchQuadTransformer {
     }
 
     private static void transformOne(BakedQuad quad, BlockPos pos, Random rand, List<BakedQuad> out) {
-        Direction facing = quad.direction();
+        Direction facing = quad.getDirection();
         rand.setSeed(Mth.getSeed(pos) + facing.ordinal());
 
         float offU = (float) rand.nextGaussian() * OFFSET_STDDEV;
         float offV = (float) rand.nextGaussian() * OFFSET_STDDEV;
 
-        Vector3fc p0 = quad.position0(), p1 = quad.position1(), p2 = quad.position2(), p3 = quad.position3();
-        long uv0 = quad.packedUV0(), uv1 = quad.packedUV1(), uv2 = quad.packedUV2(), uv3 = quad.packedUV3();
+        Vector3fc p0 = position(quad, 0), p1 = position(quad, 1), p2 = position(quad, 2), p3 = position(quad, 3);
+        long uv0 = uv(quad, 0), uv1 = uv(quad, 1), uv2 = uv(quad, 2), uv3 = uv(quad, 3);
 
-        float u0 = UVPair.unpackU(uv0), v0 = UVPair.unpackV(uv0);
-        float u1 = UVPair.unpackU(uv1), v1 = UVPair.unpackV(uv1);
-        float u2 = UVPair.unpackU(uv2), v2 = UVPair.unpackV(uv2);
-        float u3 = UVPair.unpackU(uv3), v3 = UVPair.unpackV(uv3);
+        float u0 = unpackU(uv0), v0 = unpackV(uv0);
+        float u1 = unpackU(uv1), v1 = unpackV(uv1);
+        float u2 = unpackU(uv2), v2 = unpackV(uv2);
+        float u3 = unpackU(uv3), v3 = unpackV(uv3);
 
         float minU = Math.min(Math.min(u0, u1), Math.min(u2, u3));
         float maxU = Math.max(Math.max(u0, u1), Math.max(u2, u3));
@@ -73,11 +72,11 @@ public final class EldritchQuadTransformer {
         float[] mu30 = perturbIfInterior(um30, vm30, minU, maxU, minV, maxV, offU, offV);
         float[] muc  = perturbIfInterior(umc,  vmc,  minU, maxU, minV, maxV, offU, offV);
 
-        long pUv01 = UVPair.pack(mu01[0], mu01[1]);
-        long pUv12 = UVPair.pack(mu12[0], mu12[1]);
-        long pUv23 = UVPair.pack(mu23[0], mu23[1]);
-        long pUv30 = UVPair.pack(mu30[0], mu30[1]);
-        long pUvC  = UVPair.pack(muc[0],  muc[1]);
+        long pUv01 = pack(mu01[0], mu01[1]);
+        long pUv12 = pack(mu12[0], mu12[1]);
+        long pUv23 = pack(mu23[0], mu23[1]);
+        long pUv30 = pack(mu30[0], mu30[1]);
+        long pUvC  = pack(muc[0],  muc[1]);
 
         out.add(rebuild(quad, p0, m01, center, m30, uv0, pUv01, pUvC, pUv30));
         out.add(rebuild(quad, m01, p1, m12, center, pUv01, uv1, pUv12, pUvC));
@@ -118,9 +117,31 @@ public final class EldritchQuadTransformer {
         );
     }
 
+    private static Vector3f position(BakedQuad quad, int vertex) {
+        int[] data = quad.getVertices(); int i = vertex * 8;
+        return new Vector3f(Float.intBitsToFloat(data[i]), Float.intBitsToFloat(data[i + 1]), Float.intBitsToFloat(data[i + 2]));
+    }
+    private static long uv(BakedQuad quad, int vertex) {
+        int[] data = quad.getVertices(); int i = vertex * 8;
+        return pack(Float.intBitsToFloat(data[i + 4]), Float.intBitsToFloat(data[i + 5]));
+    }
+    private static long pack(float u, float v) { return Integer.toUnsignedLong(Float.floatToRawIntBits(u)) | ((long) Float.floatToRawIntBits(v) << 32); }
+    private static float unpackU(long uv) { return Float.intBitsToFloat((int) uv); }
+    private static float unpackV(long uv) { return Float.intBitsToFloat((int) (uv >>> 32)); }
+
     private static BakedQuad rebuild(BakedQuad source, Vector3fc p0, Vector3fc p1, Vector3fc p2, Vector3fc p3,
                                      long uv0, long uv1, long uv2, long uv3) {
-        return new BakedQuad(p0, p1, p2, p3, uv0, uv1, uv2, uv3, source.direction(), source.materialInfo(),
-                source.bakedNormals(), source.bakedColors());
+        int[] vertices = source.getVertices().clone();
+        Vector3fc[] positions = {p0, p1, p2, p3};
+        long[] uvs = {uv0, uv1, uv2, uv3};
+        for (int i = 0; i < 4; i++) {
+            int offset = i * 8;
+            vertices[offset] = Float.floatToRawIntBits(positions[i].x());
+            vertices[offset + 1] = Float.floatToRawIntBits(positions[i].y());
+            vertices[offset + 2] = Float.floatToRawIntBits(positions[i].z());
+            vertices[offset + 4] = Float.floatToRawIntBits(unpackU(uvs[i]));
+            vertices[offset + 5] = Float.floatToRawIntBits(unpackV(uvs[i]));
+        }
+        return new BakedQuad(vertices, source.getTintIndex(), source.getDirection(), source.getSprite(), source.isShade(), source.hasAmbientOcclusion());
     }
 }

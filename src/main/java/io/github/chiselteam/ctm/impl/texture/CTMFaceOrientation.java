@@ -1,24 +1,22 @@
 package io.github.chiselteam.ctm.impl.texture;
 
-import com.mojang.math.Transformation;
-import net.minecraft.client.renderer.block.dispatch.ModelState;
+import io.github.chiselteam.ctm.client.model.CTMModelState;
 import net.minecraft.core.Direction;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NonNull;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 public final class CTMFaceOrientation {
-    public static final CTMFaceOrientation IDENTITY = new CTMFaceOrientation(new ModelState() {});
+    public static final CTMFaceOrientation IDENTITY = new CTMFaceOrientation(new CTMModelState() {});
     private static final Matrix4fc IDENTITY_UV = new Matrix4f();
 
     private final Map<Direction, Direction[]> corners = new EnumMap<>(Direction.class);
     private final Map<Direction, Direction[]> textures = new EnumMap<>(Direction.class);
 
-    public static CTMFaceOrientation of(ModelState state) {
+    public static CTMFaceOrientation of(CTMModelState state) {
         if (state.transformation().isIdentity()) {
             boolean identityUVs = true;
             for (var face : Direction.values()) {
@@ -32,7 +30,7 @@ public final class CTMFaceOrientation {
         return new CTMFaceOrientation(state);
     }
 
-    public CTMFaceOrientation(ModelState state) {
+    public CTMFaceOrientation(CTMModelState state) {
         for (var localFace : Direction.values()) {
             var worldFace = Direction.rotate(state.transformation().getMatrix(), localFace);
             var local = localDirections(localFace);
@@ -83,33 +81,6 @@ public final class CTMFaceOrientation {
             if (directions[i] == direction) return i;
         }
         throw new IllegalArgumentException(direction + " is not in the texture plane of " + face);
-    }
-
-    public static ModelState atlasState(ModelState state, float u, float v, float size) {
-        if (size == 1) return state;
-        var cell = new Matrix4f().translation(u + size / 2 - 0.5F, v + size / 2 - 0.5F, 0).scale(size, size, 1);
-        var inverseCell = new Matrix4f(cell).invert();
-        return new ModelState() {
-            @Override
-            public @NonNull Transformation transformation() {
-                return state.transformation();
-            }
-
-            @Override
-            public @NonNull Matrix4fc faceTransformation(@NonNull Direction face) {
-                return new Matrix4f(cell).mul(state.faceTransformation(face)).mul(inverseCell);
-            }
-
-            @Override
-            public @NonNull Matrix4fc inverseFaceTransformation(@NonNull Direction face) {
-                return new Matrix4f(cell).mul(state.inverseFaceTransformation(face)).mul(inverseCell);
-            }
-
-            @Override
-            public boolean mayApplyArbitraryRotation() {
-                return state.mayApplyArbitraryRotation();
-            }
-        };
     }
 
     private static Direction uvDirection(Direction[] world, Vector3f uv) {

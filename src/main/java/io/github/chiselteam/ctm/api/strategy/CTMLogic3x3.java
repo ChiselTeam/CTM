@@ -1,22 +1,13 @@
 package io.github.chiselteam.ctm.api.strategy;
 
 import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
-import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 public enum CTMLogic3x3 {
-    TOP_LEFT(0, 0), TOP_CENTER(16, 0), TOP_RIGHT(32, 0),
-    MID_LEFT(0, 16), MID_CENTER(16, 16), MID_RIGHT(32, 16),
-    BOTTOM_LEFT(0, 32), BOTTOM_CENTER(16, 32), BOTTOM_RIGHT(32, 32);
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private final int u, v;
-
-    CTMLogic3x3(int u, int v) {
-        this.u = u;
-        this.v = v;
-    }
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    MID_LEFT, MID_CENTER, MID_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT;
 
     public String getTextureSlot() {
         return switch (this) {
@@ -30,15 +21,6 @@ public enum CTMLogic3x3 {
             case BOTTOM_CENTER -> CTMTextureKeys.MULTIBLOCK_3X3_BOTTOM_CENTER;
             case BOTTOM_RIGHT -> CTMTextureKeys.MULTIBLOCK_3X3_BOTTOM_RIGHT;
         };
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
-        float minU = (u + uvs.minU()) / 3.0f;
-        float minV = (v + uvs.minV()) / 3.0f;
-        float maxU = (u + uvs.maxU()) / 3.0f;
-        float maxV = (v + uvs.maxV()) / 3.0f;
-        return new CuboidFace.UVs(minU, minV, maxU, maxV);
     }
 
     public static CTMLogic3x3 get(BlockPos pos, Direction face) {

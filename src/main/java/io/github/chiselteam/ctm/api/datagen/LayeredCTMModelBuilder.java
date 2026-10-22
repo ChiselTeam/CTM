@@ -1,16 +1,15 @@
 package io.github.chiselteam.ctm.api.datagen;
 
 import io.github.chiselteam.ctm.client.unbaked.UnbakedLayeredCTMBlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.VariantMutator;
-import net.neoforged.neoforge.client.model.generators.blockstate.CustomBlockStateModelBuilder;
-import net.neoforged.neoforge.client.model.generators.blockstate.UnbakedMutator;
-import org.jspecify.annotations.NonNull;
+import io.github.chiselteam.ctm.api.datagen.VariantMutator;
+import io.github.chiselteam.ctm.api.datagen.UnbakedMutator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class LayeredCTMModelBuilder extends CustomBlockStateModelBuilder {
+public final class LayeredCTMModelBuilder {
     private final List<CTMModelBuilder> layers = new ArrayList<>();
 
     private LayeredCTMModelBuilder() { }
@@ -39,22 +38,19 @@ public final class LayeredCTMModelBuilder extends CustomBlockStateModelBuilder {
         return List.copyOf(layers);
     }
 
-    @Override
-    public @NonNull LayeredCTMModelBuilder with(@NonNull VariantMutator variantMutator) {
+    public @NotNull LayeredCTMModelBuilder with(@NotNull VariantMutator variantMutator) {
         LayeredCTMModelBuilder result = create();
         layers.stream().map(layer -> layer.with(variantMutator)).forEach(result.layers::add);
         return result;
     }
 
-    @Override
-    public @NonNull LayeredCTMModelBuilder with(@NonNull UnbakedMutator unbakedMutator) {
+    public @NotNull LayeredCTMModelBuilder with(@NotNull UnbakedMutator unbakedMutator) {
         LayeredCTMModelBuilder result = create();
         layers.stream().map(layer -> layer.with(unbakedMutator)).forEach(result.layers::add);
         return result;
     }
 
-    @Override
-    public @NonNull UnbakedLayeredCTMBlockStateModel toUnbaked() {
+    public @NotNull UnbakedLayeredCTMBlockStateModel toUnbaked() {
         if (layers.isEmpty()) {
             throw new IllegalStateException("A layered CTM model requires at least one layer");
         }

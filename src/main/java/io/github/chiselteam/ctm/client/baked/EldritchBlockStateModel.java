@@ -1,19 +1,18 @@
 package io.github.chiselteam.ctm.client.baked;
 
+import io.github.chiselteam.ctm.client.model.BakedTexture;
 import io.github.chiselteam.ctm.impl.model.EldritchQuadTransformer;
 import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.world.level.BlockAndTintGetter;
+import io.github.chiselteam.ctm.client.model.CTMBakedModel;
+import io.github.chiselteam.ctm.client.model.CTMModelPart;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,88 +22,80 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadStorage {
+public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
 
     private static final int MAX_CACHE_ENTRIES = 4096;
 
-    private final BlockStateModel delegate;
+    private final CTMBakedModel delegate;
 
-    private final Map<Long, List<BlockStateModelPart>> cache = Collections.synchronizedMap(
+    private final Map<Object, List<CTMModelPart>> cache = Collections.synchronizedMap(
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<Long, List<BlockStateModelPart>> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<Object, List<CTMModelPart>> eldest) {
                     return size() > MAX_CACHE_ENTRIES;
                 }
             }
     );
 
-    public EldritchBlockStateModel(BlockStateModel delegate) {
+    public EldritchBlockStateModel(CTMBakedModel delegate) {
         this.delegate = delegate;
     }
 
     @Override
-    public void visitChildModels(Consumer<BlockStateModel> visitor) {
+    public void visitChildModels(Consumer<CTMBakedModel> visitor) {
         visitor.accept(delegate);
     }
 
     @Override
-    public @NonNull Object createGeometryKey(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random) {
+    public @NotNull Object createGeometryKey(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random) {
         Object delegateKey = computeDelegateGeometryKey(level, pos, state, random);
         return new EldritchGeometryKey(pos.asLong(), delegateKey);
     }
 
     private Object computeDelegateGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
-        if (delegate instanceof DynamicBlockStateModel dyn) {
-            return dyn.createGeometryKey(level, pos, state, random);
-        }
-        return delegate;
+        return delegate.createGeometryKey(level, pos, state, random);
     }
 
     @Override
-    public void collectParts(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random, @NonNull List<BlockStateModelPart> parts) {
-        List<BlockStateModelPart> cached = cache.get(pos.asLong());
+    public void collectParts(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random, @NotNull List<CTMModelPart> parts) {
+        Object key = createGeometryKey(level, pos, state, random);
+        List<CTMModelPart> cached = cache.get(key);
         if (cached != null) {
             parts.addAll(cached);
             return;
         }
 
-        List<BlockStateModelPart> delegateParts = new ArrayList<>();
-        if (delegate instanceof DynamicBlockStateModel dyn) {
-            dyn.collectParts(level, pos, state, random, delegateParts);
-        } else {
-            delegate.collectParts(random, delegateParts);
-        }
+        List<CTMModelPart> delegateParts = new ArrayList<>();
+        delegate.collectParts(level, pos, state, random, delegateParts);
 
-        List<BlockStateModelPart> transformed = new ArrayList<>(delegateParts.size());
-        for (BlockStateModelPart part : delegateParts) {
+        List<CTMModelPart> transformed = new ArrayList<>(delegateParts.size());
+        for (CTMModelPart part : delegateParts) {
             transformed.add(transformPart(part, pos));
         }
 
-        List<BlockStateModelPart> immutable = List.copyOf(transformed);
-        cache.put(pos.asLong(), immutable);
+        List<CTMModelPart> immutable = List.copyOf(transformed);
+        cache.put(key, immutable);
         parts.addAll(immutable);
     }
 
     @Override
-    public void collectParts(@NonNull RandomSource random, @NonNull List<BlockStateModelPart> parts) {
-        List<BlockStateModelPart> delegateParts = new ArrayList<>();
+    public void collectParts(@NotNull RandomSource random, @NotNull List<CTMModelPart> parts) {
+        List<CTMModelPart> delegateParts = new ArrayList<>();
         delegate.collectParts(random, delegateParts);
-        for (BlockStateModelPart part : delegateParts) {
+        for (CTMModelPart part : delegateParts) {
             parts.add(transformPart(part, BlockPos.ZERO));
         }
     }
 
     @Override
-    public Material.@NonNull Baked particleMaterial() {
+    public BakedTexture particleMaterial() {
         return delegate.particleMaterial();
     }
 
     @Override
-    public int materialFlags() {
-        return delegate.materialFlags();
-    }
+    public boolean useAmbientOcclusion() { return delegate.useAmbientOcclusion(); }
 
-    private static BlockStateModelPart transformPart(BlockStateModelPart part, BlockPos pos) {
+    private static CTMModelPart transformPart(CTMModelPart part, BlockPos pos) {
         Map<Direction, List<BakedQuad>> newSided = new EnumMap<>(Direction.class);
         for (Direction face : Direction.values()) {
             List<BakedQuad> faceQuads = part.getQuads(face);
@@ -124,21 +115,16 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
     private record TransformedPart(
             Map<Direction, List<BakedQuad>> sidedQuads,
             List<BakedQuad> unculledQuads,
-            BlockStateModelPart source
-    ) implements BlockStateModelPart {
+            CTMModelPart source
+    ) implements CTMModelPart {
 
         @Override
-        public @NonNull List<BakedQuad> getQuads(@Nullable Direction side) {
+        public @NotNull List<BakedQuad> getQuads(@Nullable Direction side) {
             return side == null ? unculledQuads : sidedQuads.get(side);
         }
 
         @Override
-        public int materialFlags() {
-            return source.materialFlags();
-        }
-
-        @Override
-        public Material.@NonNull Baked particleMaterial() {
+        public BakedTexture particleMaterial() {
             return source.particleMaterial();
         }
 

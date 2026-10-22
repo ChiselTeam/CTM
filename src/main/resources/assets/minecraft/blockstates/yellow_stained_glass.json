@@ -1,11 +1,7 @@
 {
-  "neoforge:definition_type": "ctm:connected_texture_model",
-  "model_location": "ctm:block/yellow_stained_glass",
-  "connected_faces": [
-    "all"
-  ],
-  "variant": {
-    "block": "minecraft:yellow_stained_glass",
-    "kind": "standard"
+  "variants": {
+    "": {
+      "model": "minecraft:block/ctm/yellow_stained_glass"
+    }
   }
 }

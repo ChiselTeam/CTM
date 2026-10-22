@@ -1,10 +1,10 @@
 package io.github.chiselteam.ctm.util;
 
-import net.minecraft.client.renderer.block.dispatch.ModelState;
-import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.cuboid.CuboidFace;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
+import io.github.chiselteam.ctm.client.model.BakedTexture;
+import io.github.chiselteam.ctm.client.model.CTMModelState;
+import io.github.chiselteam.ctm.client.model.CTMBakingContext;
+import io.github.chiselteam.ctm.client.model.CTMFace;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import org.joml.Vector3f;
 
@@ -12,28 +12,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public record ModelRecipe(ModelBaker baker, ModelState state, Direction face, Direction cull, CuboidFace.UVs faceUvs,
-                          Vector3f[] offsets, Map<Direction, CuboidFace.UVs> faceQuads,
-                          Map<Direction, BakedQuad[]> bakedQuads, Set<Direction> unculledFaces, Material.Baked base) {
+public record ModelRecipe(CTMBakingContext baker, CTMModelState state, Direction face, Direction cull, CTMFace.UVs faceUvs,
+                          Vector3f[] offsets, Map<Direction, CTMFace.UVs> faceQuads,
+                          Map<Direction, BakedQuad[]> bakedQuads, Set<Direction> unculledFaces, BakedTexture base) {
 
     public static class Builder {
-        private ModelBaker baker;
-        private ModelState state;
+        private CTMBakingContext baker;
+        private CTMModelState state;
         private Direction face;
         private Direction cull;
-        private CuboidFace.UVs faceUvs;
+        private CTMFace.UVs faceUvs;
         private Vector3f[] offsets;
-        private Map<Direction, CuboidFace.UVs> faceQuads;
+        private Map<Direction, CTMFace.UVs> faceQuads;
         private Map<Direction, BakedQuad[]> bakedQuads;
         private Set<Direction> unculledFaces;
-        private Material.Baked base;
+        private BakedTexture base;
 
-        public Builder baker(ModelBaker baker) {
+        public Builder baker(CTMBakingContext baker) {
             this.baker = baker;
             return this;
         }
 
-        public Builder state(ModelState state) {
+        public Builder state(CTMModelState state) {
             this.state = state;
             return this;
         }
@@ -48,7 +48,7 @@ public record ModelRecipe(ModelBaker baker, ModelState state, Direction face, Di
             return this;
         }
 
-        public Builder faceUvs(CuboidFace.UVs faceUvs) {
+        public Builder faceUvs(CTMFace.UVs faceUvs) {
             this.faceUvs = faceUvs;
             return this;
         }
@@ -58,12 +58,12 @@ public record ModelRecipe(ModelBaker baker, ModelState state, Direction face, Di
             return this;
         }
 
-        public Builder faceQuads(Map<Direction, CuboidFace.UVs> faceQuads) {
+        public Builder faceQuads(Map<Direction, CTMFace.UVs> faceQuads) {
             this.faceQuads = faceQuads;
             return this;
         }
 
-        public Builder faceQuad(Direction direction, CuboidFace.UVs uvs) {
+        public Builder faceQuad(Direction direction, CTMFace.UVs uvs) {
             if (this.faceQuads == null) {
                 this.faceQuads = new HashMap<>();
             }
@@ -81,24 +81,13 @@ public record ModelRecipe(ModelBaker baker, ModelState state, Direction face, Di
             return this;
         }
 
-        public Builder base(Material.Baked base) {
+        public Builder base(BakedTexture base) {
             this.base = base;
             return this;
         }
 
         public ModelRecipe build() {
-            return new ModelRecipe(
-                    baker,
-                    state,
-                    face,
-                    cull,
-                    faceUvs,
-                    offsets,
-                    faceQuads,
-                    bakedQuads,
-                    unculledFaces,
-                    base
-            );
+            return new ModelRecipe(baker, state, face, cull, faceUvs, offsets, faceQuads, bakedQuads, unculledFaces, base);
         }
     }
 }

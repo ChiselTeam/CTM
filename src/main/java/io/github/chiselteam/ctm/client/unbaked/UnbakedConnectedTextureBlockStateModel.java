@@ -10,15 +10,15 @@ import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.EldritchBlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.Variant;
-import net.minecraft.client.renderer.block.dispatch.VariantMutator;
-import net.minecraft.client.resources.model.ModelBaker;
+import io.github.chiselteam.ctm.client.model.CTMBakedModel;
+import io.github.chiselteam.ctm.client.model.CTMModelVariant;
+import io.github.chiselteam.ctm.api.datagen.VariantMutator;
+import io.github.chiselteam.ctm.client.model.CTMBakingContext;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
+import net.minecraft.resources.ResourceLocation;
+import io.github.chiselteam.ctm.client.model.CTMUnbakedModel;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -26,23 +26,23 @@ import java.util.Set;
 
 public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+    public UnbakedConnectedTextureBlockStateModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots, CTMModelVariant.SimpleModelState modelState) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
     }
 
-    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    public UnbakedConnectedTextureBlockStateModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    public UnbakedConnectedTextureBlockStateModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    public UnbakedConnectedTextureBlockStateModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots) {
         this(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, true, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public UnbakedConnectedTextureBlockStateModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
+    public UnbakedConnectedTextureBlockStateModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
         this(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, false, CTMBlockPredicate.sameBlock(), List.of(), Map.of());
     }
 
@@ -60,7 +60,7 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
 
     public static final MapCodec<UnbakedConnectedTextureBlockStateModel> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
-                    Identifier.CODEC.fieldOf("model_location").forGetter(m -> m.modelLocation),
+                    ResourceLocation.CODEC.fieldOf("model_location").forGetter(m -> m.modelLocation),
                     ELEMENT_CODEC.optionalFieldOf("element", DEFAULT_ELEMENT).forGetter(m -> m.element),
                     CTMModelCodecs.FACES_CODEC.fieldOf("connected_faces").forGetter(m -> m.connectedFaces),
                     Codec.BOOL.optionalFieldOf("render_overlay_on_all_faces", false).forGetter(m -> m.renderOverlayOnAllFaces),
@@ -74,34 +74,34 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
                     Codec.BOOL.optionalFieldOf("eldritch", false).forGetter(m -> m.eldritch),
                     CTMModelCodecs.CONNECTS_TO_CODEC.optionalFieldOf("connects_to", CTMBlockPredicate.sameBlock()).forGetter(m -> m.connectionPredicate),
                     CTMModelCodecs.OVERLAY_RULE_CODEC.listOf().optionalFieldOf("overlays", List.of()).forGetter(m -> m.overlays),
-                    Codec.unboundedMap(Codec.STRING, Identifier.CODEC).optionalFieldOf("texture_slots", Map.of()).forGetter(m -> m.textureSlots),
-                    Variant.SimpleModelState.MAP_CODEC.forGetter(m -> m.modelState)
+                    Codec.unboundedMap(Codec.STRING, ResourceLocation.CODEC).optionalFieldOf("texture_slots", Map.of()).forGetter(m -> m.textureSlots),
+                    CTMModelVariant.SimpleModelState.MAP_CODEC.forGetter(m -> m.modelState)
             ).apply(instance, UnbakedConnectedTextureBlockStateModel::new)
     );
 
     public UnbakedConnectedTextureBlockStateModel with(VariantMutator mutator) {
-        Variant transformed = mutator.apply(new Variant(modelLocation, modelState));
+        CTMModelVariant transformed = mutator.apply(new CTMModelVariant(modelLocation, modelState));
         return new UnbakedConnectedTextureBlockStateModel(transformed.modelLocation(), element, connectedFaces,
                 renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade,
                 ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, transformed.modelState());
     }
 
-    public Variant.SimpleModelState modelState() {
+    public CTMModelVariant.SimpleModelState modelState() {
         return modelState;
     }
 
-    public Identifier modelLocation() {
+    public ResourceLocation modelLocation() {
         return modelLocation;
     }
 
     @Override
-    public @NonNull MapCodec<? extends CustomUnbakedBlockStateModel> codec() {
+    public @NotNull MapCodec<? extends CTMUnbakedModel> codec() {
         return CODEC;
     }
 
     @Override
-    public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
-        BlockStateModel baked = forKind(variant.kind()).bake(baker);
+    public @NotNull CTMBakedModel bake(@NotNull CTMBakingContext baker) {
+        CTMBakedModel baked = forKind(variant.kind()).bake(baker);
         return eldritch ? new EldritchBlockStateModel(baked) : baked;
     }
 

@@ -1,7 +1,10 @@
 {
   "textures": {
-    "overlay_connected": "minecraft:block/glass-ctm",
-    "overlay_texture": "minecraft:block/glass",
-    "particle": "minecraft:block/glass"
+    "particle": "minecraft:block/glass",
+    "standard_none": "minecraft:block/glass",
+    "standard_cornerless": "ctm:block/glass/standard_cornerless",
+    "standard_vertical": "ctm:block/glass/standard_vertical",
+    "standard_horizontal": "ctm:block/glass/standard_horizontal",
+    "standard_corner": "ctm:block/glass/standard_corner"
   }
 }

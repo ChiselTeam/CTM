@@ -1,7 +1,10 @@
 {
   "textures": {
-    "overlay_connected": "minecraft:block/glass_yellow-ctm",
-    "overlay_texture": "minecraft:block/yellow_stained_glass",
-    "particle": "minecraft:block/yellow_stained_glass"
+    "particle": "minecraft:block/yellow_stained_glass",
+    "standard_none": "minecraft:block/yellow_stained_glass",
+    "standard_cornerless": "ctm:block/yellow_stained_glass/standard_cornerless",
+    "standard_vertical": "ctm:block/yellow_stained_glass/standard_vertical",
+    "standard_horizontal": "ctm:block/yellow_stained_glass/standard_horizontal",
+    "standard_corner": "ctm:block/yellow_stained_glass/standard_corner"
   }
 }

@@ -1,6 +1,6 @@
 package io.github.chiselteam.ctm.api.strategy;
 
-import net.minecraft.client.resources.model.cuboid.CuboidFace;
+import io.github.chiselteam.ctm.client.model.CTMFace;
 import net.minecraft.util.RandomSource;
 
 public enum CTMLogicR4 {
@@ -14,12 +14,12 @@ public enum CTMLogicR4 {
         this.v = v;
     }
 
-    public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
+    public CTMFace.UVs remapUVs(CTMFace.UVs uvs) {
         float minU = (u + uvs.minU()) / 2.0f;
         float minV = (v + uvs.minV()) / 2.0f;
         float maxU = (u + uvs.maxU()) / 2.0f;
         float maxV = (v + uvs.maxV()) / 2.0f;
-        return new CuboidFace.UVs(minU, minV, maxU, maxV);
+        return new CTMFace.UVs(minU, minV, maxU, maxV);
     }
 
     public static CTMLogicR4 get(RandomSource random) {

@@ -3,7 +3,23 @@
   "textures": {
     "all": "minecraft:block/obsidian",
     "overlay": "minecraft:block/obsidian_reflect",
-    "overlay_connected": "minecraft:block/obsidian_reflect-ctm",
-    "particle": "minecraft:block/obsidian"
+    "particle": "minecraft:block/obsidian",
+    "base_texture": "minecraft:block/obsidian",
+    "edges_none": "minecraft:block/obsidian",
+    "edges_diagonals_top_left_bottom_right": "ctm:block/obsidian/edges_diagonals_top_left_bottom_right",
+    "edges_diagonals_top_right_bottom_left": "ctm:block/obsidian/edges_diagonals_top_right_bottom_left",
+    "edges_top_left": "ctm:block/obsidian/edges_top_left",
+    "edges_corner_bottom_right": "ctm:block/obsidian/edges_corner_bottom_right",
+    "edges_bottom": "ctm:block/obsidian/edges_bottom",
+    "edges_corner_bottom_left": "ctm:block/obsidian/edges_corner_bottom_left",
+    "edges_top_right": "ctm:block/obsidian/edges_top_right",
+    "edges_right": "ctm:block/obsidian/edges_right",
+    "edges_all": "ctm:block/obsidian/edges_all",
+    "edges_left": "ctm:block/obsidian/edges_left",
+    "edges_right_bottom": "ctm:block/obsidian/edges_right_bottom",
+    "edges_corner_top_right": "ctm:block/obsidian/edges_corner_top_right",
+    "edges_top": "ctm:block/obsidian/edges_top",
+    "edges_corner_top_left": "ctm:block/obsidian/edges_corner_top_left",
+    "edges_bottom_left": "ctm:block/obsidian/edges_bottom_left"
   }
 }

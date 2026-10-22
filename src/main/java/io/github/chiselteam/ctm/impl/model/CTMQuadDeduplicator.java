@@ -1,19 +1,21 @@
 package io.github.chiselteam.ctm.impl.model;
 
 import io.github.chiselteam.ctm.CTM;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ModelEvent;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @EventBusSubscriber(modid = CTM.MOD_ID, value = Dist.CLIENT)
@@ -22,13 +24,13 @@ public final class CTMQuadDeduplicator {
 
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-        deduplicate(event.getBakingResult().blockStateModels().values());
+        deduplicate(event.getModels().values());
     }
 
-    public static void deduplicate(Collection<? extends BlockStateModel> models) {
-        Map<BakedQuad, BakedQuad> canonical = new HashMap<>();
-        Set<BlockStateModel> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-        var pending = new ArrayDeque<BlockStateModel>(models);
+    public static void deduplicate(Collection<? extends BakedModel> models) {
+        Map<QuadKey, BakedQuad> canonical = new HashMap<>();
+        Set<BakedModel> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        var pending = new ArrayDeque<BakedModel>(models);
         while (!pending.isEmpty()) {
             var model = pending.removeFirst();
             if (!visited.add(model) || !(model instanceof CTMQuadStorage storage)) continue;
@@ -37,11 +39,24 @@ public final class CTMQuadDeduplicator {
                 for (int i = 0; i < quads.length; i++) {
                     var quad = quads[i];
                     if (quad == null) continue;
-                    var existing = canonical.putIfAbsent(quad, quad);
+                    var existing = canonical.putIfAbsent(new QuadKey(quad), quad);
                     if (existing != null) quads[i] = existing;
                 }
             });
             storage.visitChildModels(pending::addLast);
+        }
+    }
+
+    private record QuadKey(BakedQuad quad) {
+        @Override public int hashCode() {
+            return Objects.hash(Arrays.hashCode(quad.getVertices()), quad.getSprite(), quad.getDirection(), quad.getTintIndex(), quad.isShade(), quad.hasAmbientOcclusion());
+        }
+        @Override public boolean equals(Object other) {
+            return other instanceof QuadKey(BakedQuad right)
+                    && Arrays.equals(quad.getVertices(), right.getVertices())
+                    && quad.getSprite() == right.getSprite() && quad.getDirection() == right.getDirection()
+                    && quad.getTintIndex() == right.getTintIndex() && quad.isShade() == right.isShade()
+                    && quad.hasAmbientOcclusion() == right.hasAmbientOcclusion();
         }
     }
 }

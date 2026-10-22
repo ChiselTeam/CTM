@@ -1,6 +1,6 @@
 package io.github.chiselteam.ctm.api.strategy;
 
-import net.minecraft.client.resources.model.cuboid.CuboidFace;
+import io.github.chiselteam.ctm.client.model.CTMFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -16,12 +16,12 @@ public enum CTMLogicV9 {
         this.v = v;
     }
 
-    public CuboidFace.UVs remapUVs(CuboidFace.UVs uvs) {
+    public CTMFace.UVs remapUVs(CTMFace.UVs uvs) {
         float minU = (u + uvs.minU()) / 3.0f;
         float minV = (v + uvs.minV()) / 3.0f;
         float maxU = (u + uvs.maxU()) / 3.0f;
         float maxV = (v + uvs.maxV()) / 3.0f;
-        return new CuboidFace.UVs(minU, minV, maxU, maxV);
+        return new CTMFace.UVs(minU, minV, maxU, maxV);
     }
 
     public static CTMLogicV9 get(BlockPos pos, Direction side) {

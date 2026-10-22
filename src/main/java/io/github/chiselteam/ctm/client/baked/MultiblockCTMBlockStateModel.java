@@ -20,9 +20,9 @@ import io.github.chiselteam.ctm.api.geometry.MultiblockCTMKey;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.CTMLogicOrientation;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -41,7 +41,7 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
     public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> multiblock2x2Quads, Map<Direction, BakedQuad[]> multiblock3x3Quads, Map<Direction, BakedQuad[]> multiblock4x4Quads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads), ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
         this.multiblock2x2Quads = multiblock2x2Quads;
         this.multiblock3x3Quads = multiblock3x3Quads;
         this.multiblock4x4Quads = multiblock4x4Quads;
@@ -62,33 +62,13 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
                                         CTMBlockPredicate connectionPredicate,
                                         List<CTMOverlayRule> overlayRules,
                                         Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads));
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules);
         this.multiblock2x2Quads = multiblock2x2Quads;
         this.multiblock3x3Quads = multiblock3x3Quads;
         this.multiblock4x4Quads = multiblock4x4Quads;
         this.ruleQuads = ruleQuads;
         this.selector = createSelector(variant.kind());
         this.effectiveBaseQuads = computeEffectiveBaseQuads();
-    }
-
-    private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> mb2, Map<Direction, BakedQuad[]> mb3, Map<Direction, BakedQuad[]> mb4, Map<CTMOverlayRule, Map<Direction, BakedQuad>> rules) {
-        int flags = 0;
-        for (BakedQuad[] quads : baseQuads.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (BakedQuad[] quads : mb2.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (BakedQuad[] quads : mb3.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (BakedQuad[] quads : mb4.values()) {
-            for (BakedQuad quad : quads) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        for (Map<Direction, BakedQuad> sideMap : rules.values()) {
-            for (BakedQuad quad : sideMap.values()) if (quad != null) flags |= quad.materialInfo().flags();
-        }
-        return flags;
     }
 
     public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces,

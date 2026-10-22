@@ -10,9 +10,9 @@ import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.impl.model.CTMPartBuilder;
 import io.github.chiselteam.ctm.impl.texture.CTMFaceOrientation;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -39,7 +39,7 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
     }
 
     public EdgesCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> regularConnectedQuads, Map<Direction, BakedQuad[]> fullAtlasQuads, Map<Direction, BakedQuad[]> obscuredQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion, CTMFaceOrientation orientation) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, ruleQuads), ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
         this.kind = variant.kind();
         this.orientation = orientation;
         this.regularConnectedQuads = regularConnectedQuads;
@@ -57,7 +57,7 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
                                    CTMVariant variant, CTMBlockPredicate connectionPredicate,
                                    List<CTMOverlayRule> overlayRules,
                                    Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, regularConnectedQuads, fullAtlasQuads, obscuredQuads, ruleQuads));
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules);
 
         this.kind = variant.kind();
         this.orientation = CTMFaceOrientation.IDENTITY;
@@ -306,56 +306,5 @@ public final class EdgesCTMBlockStateModel extends AbstractConnectedTextureBlock
 
             if (quad != null) faceQuads.add(quad);
         }
-    }
-
-    private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads,
-                                         Map<Direction, BakedQuad[][]> regularConnectedQuads,
-                                         Map<Direction, BakedQuad[]> fullAtlasQuads,
-                                         Map<Direction, BakedQuad[]> obscuredQuads,
-                                         Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        int flags = flags(baseQuads);
-
-        for (BakedQuad[][] faceQuads : regularConnectedQuads.values()) {
-            if (faceQuads == null) continue;
-
-            for (BakedQuad[] quadrantQuads : faceQuads)
-                flags |= flags(quadrantQuads);
-        }
-
-        flags |= flags(fullAtlasQuads);
-        flags |= flags(obscuredQuads);
-
-        for (Map<Direction, BakedQuad> sideMap : ruleQuads.values()) {
-            if (sideMap == null) continue;
-
-            for (BakedQuad quad : sideMap.values()) {
-                if (quad != null)
-                    flags |= quad.materialInfo().flags();
-            }
-        }
-
-        return flags;
-    }
-
-    private static int flags(Map<Direction, BakedQuad[]> quadsByFace) {
-        int flags = 0;
-
-        for (BakedQuad[] quads : quadsByFace.values())
-            flags |= flags(quads);
-
-        return flags;
-    }
-
-    private static int flags(BakedQuad[] quads) {
-        int flags = 0;
-
-        if (quads == null) return flags;
-
-        for (BakedQuad quad : quads) {
-            if (quad != null)
-                flags |= quad.materialInfo().flags();
-        }
-
-        return flags;
     }
 }

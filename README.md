@@ -12,7 +12,7 @@ CTM is a NeoForge library that provides advanced connected texture rendering for
     - **Anti-Repeat (AR)**: Random rotation/tiling to break up repetitive patterns.
 - **Eldritch Effect**: Dynamic UV-perturbation for mystical or shifting textures.
 - **Fluent DataGen API**: Easily generate complex CTM model files.
-- **NeoForge Native**: Built from the ground up for NeoForge 26.1.2.
+- **NeoForge Native**: Built from the ground up for Minecraft 1.21.1 and NeoForge 21.1.
 
 ## Installation
 
@@ -47,13 +47,14 @@ For detailed information on how to use the library, see the following guides:
 
 ## Basic Usage
 
-CTM models are defined in your blockstate JSON files using the `ctm:connected_texture_model` loader.
+CTM models are defined in `assets/<namespace>/models/block/*.json` files using the `ctm:connected_texture_model` loader.
 
-Example blockstate snippet:
+Example model:
 ```json
 {
   "loader": "ctm:connected_texture_model",
   "model_location": "my_mod:block/my_block",
+  "connected_faces": ["all"],
   "variant": {
     "block": "my_mod:my_block",
     "kind": "standard"

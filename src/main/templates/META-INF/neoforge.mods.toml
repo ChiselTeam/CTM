@@ -1,3 +1,5 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
 license="${mod_license}"
 
 [[mods]]
@@ -6,3 +8,17 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="Cricket"
 description="A NeoForge connected-texture library for reusable CTM models, overlays, multiblock patterns, and datagen support."
+
+[[dependencies.ctm]]
+modId="neoforge"
+type="required"
+versionRange="[${neo_version},)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.ctm]]
+modId="minecraft"
+type="required"
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"

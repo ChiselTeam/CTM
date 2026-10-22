@@ -1,0 +1,11 @@
+{
+  "model_location": "ctm:block/lime_stained_glass",
+  "connected_faces": [
+    "all"
+  ],
+  "variant": {
+    "block": "minecraft:lime_stained_glass",
+    "kind": "standard"
+  },
+  "loader": "ctm:connected_texture_model"
+}

@@ -4,8 +4,8 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.134'
-    id 'net.darkhax.curseforgegradle' version '1.2.30'
+    id 'net.neoforged.gradle.userdev' version '7.0.170'
+    id 'net.darkhax.curseforgegradle' version '1.1.26'
     id 'com.modrinth.minotaur' version '2.+'
 }
 
@@ -36,47 +36,34 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-neoForge {
-    version = project.neo_version
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
+accessTransformers {
+    files.from('src/main/resources/META-INF/accesstransformer.cfg')
+}
 
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        data {
-            clientData()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
     }
 
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
+    client {
+        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
     }
 
-    unitTest {
-        enable()
-        testedMod = mods."${mod_id}"
+    server {
+        argument '--nogui'
+        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+    }
+
+    gameTestServer {
+        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+    }
+
+    data {
+        arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
     }
 }
 
@@ -85,6 +72,7 @@ configurations {
 }
 
 dependencies {
+    implementation "net.neoforged:neoforge:${neo_version}"
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.mockito:mockito-core:5.20.0'
@@ -102,6 +90,7 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 
     mainFile.changelog = file('CHANGELOG.md')
     mainFile.addModLoader("neoforge")
+    mainFile.addGameVersion(minecraft_version)
     mainFile.addGameVersion("Client", "Server")
     mainFile.releaseType = release_type
 }
@@ -113,7 +102,7 @@ modrinth {
     versionNumber = mod_version
     versionType = release_type
     uploadFile = jar
-    gameVersions = ["26.1.2"]
+    gameVersions = [minecraft_version]
     loaders = ["neoforge"]
 }
 
@@ -154,7 +143,6 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     into "build/generated/sources/modMetadata"
 }
 sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
 
 java {
     withSourcesJar()

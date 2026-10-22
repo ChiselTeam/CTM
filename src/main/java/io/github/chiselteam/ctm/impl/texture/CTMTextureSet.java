@@ -1,25 +1,25 @@
 package io.github.chiselteam.ctm.impl.texture;
 
-import net.minecraft.client.resources.model.sprite.Material;
+import io.github.chiselteam.ctm.client.model.BakedTexture;
 
+import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.Map;
 
 public class CTMTextureSet<T extends Enum<T>> {
 
     private final Class<T> type;
-    private final EnumMap<T, Material.Baked> materials;
+    private final EnumMap<T, BakedTexture> materials;
 
     public CTMTextureSet(Class<T> type) {
         this.type = type;
         this.materials = new EnumMap<>(type);
     }
 
-    public void put(T state, Material.Baked material) {
+    public void put(T state, BakedTexture material) {
         if(material != null) materials.put(state, material);
     }
 
-    public Material.Baked get(T state) {
+    public BakedTexture get(T state) {
         return materials.get(state);
     }
 
@@ -31,8 +31,12 @@ public class CTMTextureSet<T extends Enum<T>> {
         return materials.size() == type.getEnumConstants().length;
     }
 
-    public Map<T, Material.Baked> getMaterials() {
-        return materials;
+    public void requireComplete(String model) {
+        if (!isComplete()) {
+            var missing = Arrays.stream(type.getEnumConstants())
+                    .filter(state -> !materials.containsKey(state)).toList();
+            throw new IllegalArgumentException("Missing standalone CTM textures for " + model + ": " + missing);
+        }
     }
 
     public Class<T> getType() {

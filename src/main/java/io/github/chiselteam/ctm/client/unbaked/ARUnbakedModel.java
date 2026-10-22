@@ -1,7 +1,7 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.math.Quadrant;
+import io.github.chiselteam.ctm.client.model.CTMFace.Quadrant;
 import com.mojang.serialization.MapCodec;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
@@ -11,67 +11,59 @@ import io.github.chiselteam.ctm.api.texture.CTMTextureKeys;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.ARCTMBlockStateModel;
 import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.Variant;
-import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.cuboid.CuboidFace;
-import net.minecraft.client.resources.model.cuboid.FaceBakery;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
+import io.github.chiselteam.ctm.client.model.CTMBakedModel;
+import io.github.chiselteam.ctm.client.model.CTMModelVariant;
+import io.github.chiselteam.ctm.client.model.CTMBakingContext;
+import io.github.chiselteam.ctm.client.model.CTMFace;
+import io.github.chiselteam.ctm.client.model.CTMFaceBakery;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
+import net.minecraft.resources.ResourceLocation;
+import io.github.chiselteam.ctm.client.model.CTMUnbakedModel;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateModel {
 
-    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots, Variant.SimpleModelState modelState) {
+    public ARUnbakedModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots, CTMModelVariant.SimpleModelState modelState) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots, modelState);
     }
 
-    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    public ARUnbakedModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean ambientOcclusion, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, ambientOcclusion, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, Identifier> textureSlots) {
+    public ARUnbakedModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity, boolean shade, boolean eldritch, CTMBlockPredicate connectionPredicate, List<CTMModelCodecs.UnbakedOverlayRule> overlays, Map<String, ResourceLocation> textureSlots) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity, shade, eldritch, connectionPredicate, overlays, textureSlots);
     }
 
-    public ARUnbakedModel(Identifier modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
+    public ARUnbakedModel(ResourceLocation modelLocation, Pair<Vector3f, Vector3f> element, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces, CTMVariant variant, int baseTintIndex, int baseEmissivity, int tintIndex, int emissivity) {
         super(modelLocation, element, connectedFaces, renderOverlayOnAllFaces, variant, baseTintIndex, baseEmissivity, tintIndex, emissivity);
     }
 
     @Override
-    public @NonNull MapCodec<? extends CustomUnbakedBlockStateModel> codec() {
+    public @NotNull MapCodec<? extends CTMUnbakedModel> codec() {
         return UnbakedConnectedTextureBlockStateModel.CODEC;
     }
 
     @Override
-    public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
+    public @NotNull CTMBakedModel bake(@NotNull CTMBakingContext baker) {
+        baker = baker.withAmbientOcclusion(ambientOcclusion);
         prepareBakery(baker);
 
-        var textureSlots = model.getTopTextureSlots();
-        Material baseMaterial = textureSlots.getMaterial("base_texture");
-        if (baseMaterial == null) baseMaterial = textureSlots.getMaterial("layer0");
-        var particleMaterial = textureSlots.getMaterial("particle");
+        Material baseMaterial = getMaterial("base_texture");
+        if (baseMaterial == null) baseMaterial = getMaterial("layer0");
+        var particleMaterial = getMaterial("particle");
 
         var bakedBase = bakeMaterial(baker, baseMaterial);
         var bakedParticle = bakeMaterial(baker, particleMaterial);
 
         var textures = bakeTextures(baker);
-        var useStandaloneTextures = textures.isComplete();
-
-        Material.Baked legacyOverlay = null;
-        if (!useStandaloneTextures) legacyOverlay = bakeLegacyOverlay(baker);
-
-        if (bakedParticle == null) {
-            if (bakedBase != null) bakedParticle = bakedBase;
-            else if (useStandaloneTextures) bakedParticle = textures.get(CTMLogicAR.T0);
-            else bakedParticle = legacyOverlay;
-        }
+        textures.requireComplete(modelLocation.toString());
+        if (bakedParticle == null) bakedParticle = bakedBase != null ? bakedBase : textures.get(CTMLogicAR.T0);
 
         Map<Direction, BakedQuad[]> baseQuads = new EnumMap<>(Direction.class);
         Map<Direction, BakedQuad[][]> connectedQuads = new EnumMap<>(Direction.class);
@@ -89,9 +81,9 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
             var connQuads = new BakedQuad[4][CTMLogicAR.values().length];
 
             for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++) {
-                var corner = face.getUnitVec3i()
-                        .offset(planeDirections[cornerIndex].getUnitVec3i())
-                        .offset(planeDirections[(cornerIndex + 1) % 4].getUnitVec3i())
+                var corner = face.getNormal()
+                        .offset(planeDirections[cornerIndex].getNormal())
+                        .offset(planeDirections[(cornerIndex + 1) % 4].getNormal())
                         .offset(1, 1, 1)
                         .multiply(8);
 
@@ -111,15 +103,11 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
                 var offsets = getOffsets(face, qFrom, qTo);
 
                 if (bakedBase != null) {
-                    var baseFace = new CuboidFace(cull, baseTintIndex, "", qUvs, Quadrant.R0);
-                    baseQuadList.add(FaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
+                    var baseFace = new CTMFace(cull, baseTintIndex, "", qUvs, Quadrant.R0);
+                    baseQuadList.add(CTMFaceBakery.bakeQuad(baker, qFrom, qTo, baseFace, bakedBase, face, state, null, shade, baseEmissivity));
                 }
 
-                if (useStandaloneTextures) {
-                    bakeQuads(baker, face, cull, qUvs, offsets, textures, connQuads[cornerIndex], unculledFaces);
-                } else if (legacyOverlay != null) {
-                    bakeLegacyARQuads(baker, face, cull, qUvs, offsets, legacyOverlay, connQuads[cornerIndex], unculledFaces);
-                }
+                bakeQuads(baker, face, cull, qUvs, offsets, textures, connQuads[cornerIndex], unculledFaces);
             }
 
             if (!baseQuadList.isEmpty()) baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
@@ -142,7 +130,7 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         );
     }
 
-    private CTMTextureSet<CTMLogicAR> bakeTextures(ModelBaker baker) {
+    private CTMTextureSet<CTMLogicAR> bakeTextures(CTMBakingContext baker) {
         var textures = new CTMTextureSet<>(CTMLogicAR.class);
         textures.put(CTMLogicAR.T0, bakeMaterial(baker, getMaterial(CTMTextureKeys.AR_1)));
         textures.put(CTMLogicAR.T1, bakeMaterial(baker, getMaterial(CTMTextureKeys.AR_2)));
@@ -151,51 +139,15 @@ public class ARUnbakedModel extends AbstractUnbakedConnectedTextureBlockStateMod
         return textures;
     }
 
-    @Deprecated(forRemoval = true, since = "26.1")
-    private Material.Baked bakeLegacyOverlay(ModelBaker baker) {
-        Material overlay = getMaterial("overlay_2x2");
-        if (overlay == null) overlay = getMaterial("overlay_texture");
-        if (overlay == null) overlay = getMaterial("layer1");
-
-        return bakeMaterial(baker, overlay);
-    }
-
-    private void bakeQuads(ModelBaker baker, Direction face, Direction cull, CuboidFace.UVs faceUVs, Vector3f[] offsets, CTMTextureSet<CTMLogicAR> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
+    private void bakeQuads(CTMBakingContext baker, Direction face, Direction cull, CTMFace.UVs faceUVs, Vector3f[] offsets, CTMTextureSet<CTMLogicAR> textures, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
         for (var logic : CTMLogicAR.values()) {
             var mat = textures.get(logic);
             if (mat == null) continue;
 
-            var connFace = new CuboidFace(cull, tintIndex, "", faceUVs, Quadrant.R0);
+            var connFace = new CTMFace(cull, tintIndex, "", faceUVs, Quadrant.R0);
             if (connFace.cullForDirection() == null) unculledFaces.add(face);
 
-            connQuads[logic.ordinal()] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, mat, face, state, null, shade, emissivity);
-        }
-    }
-
-    @Deprecated(forRemoval = true, since = "26.1")
-    private void bakeLegacyARQuads(ModelBaker baker, Direction face, Direction cull, CuboidFace.UVs qUvs, Vector3f[] offsets, Material.Baked material, BakedQuad[] connQuads, Set<Direction> unculledFaces) {
-        int[][] arUVs = {
-                {0, 0},
-                {16, 0},
-                {0, 16},
-                {16, 16}
-        };
-
-        for (int i = 0; i < arUVs.length; i++) {
-            int u = arUVs[i][0];
-            int v = arUVs[i][1];
-
-            var arUvs = new CuboidFace.UVs(
-                    (u + qUvs.minU()) / 2.0F,
-                    (v + qUvs.minV()) / 2.0F,
-                    (u + qUvs.maxU()) / 2.0F,
-                    (v + qUvs.maxV()) / 2.0F
-            );
-
-            var connFace = new CuboidFace(cull, tintIndex, "", arUvs, Quadrant.R0);
-            if (connFace.cullForDirection() == null) unculledFaces.add(face);
-
-            connQuads[i] = FaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, material, face, state, null, shade, emissivity);
+            connQuads[logic.ordinal()] = CTMFaceBakery.bakeQuad(baker, offsets[0], offsets[1], connFace, mat, face, state, null, shade, emissivity);
         }
     }
 }

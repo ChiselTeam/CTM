@@ -1,46 +1,23 @@
 package io.github.chiselteam.ctm;
 
-import io.github.chiselteam.ctm.api.datagen.CTMBlockModelDefinition;
-import io.github.chiselteam.ctm.api.datagen.LayeredCTMBlockModelDefinition;
-import io.github.chiselteam.ctm.client.unbaked.UnbakedConnectedTextureBlockStateModel;
-import io.github.chiselteam.ctm.client.unbaked.UnbakedLayeredCTMBlockStateModel;
-import io.github.chiselteam.ctm.client.unbaked.UnbakedEldritchBlockStateModel;
-import net.minecraft.resources.Identifier;
-import net.neoforged.bus.api.SubscribeEvent;
 import io.github.chiselteam.ctm.network.CTMOffsetSyncPacket;
-import net.neoforged.neoforge.client.event.RegisterBlockStateModels;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 @Mod(CTM.MOD_ID)
 public final class CTM {
     public static final String MOD_ID = "ctm";
-
-    public static final Identifier CTM_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "connected_texture_model");
-    public static final Identifier ELDRITCH_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "eldritch_model");
-    public static final Identifier CTM_DEFINITION_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "connected_texture_model");
-    public static final Identifier LAYERED_CTM_MODEL_ID = Identifier.fromNamespaceAndPath(CTM.MOD_ID, "layered_connected_texture_model");
+    public static final ResourceLocation CTM_MODEL_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "connected_texture_model");
+    public static final ResourceLocation ELDRITCH_MODEL_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "eldritch_model");
+    public static final ResourceLocation LAYERED_CTM_MODEL_ID = ResourceLocation.fromNamespaceAndPath(MOD_ID, "layered_connected_texture_model");
 
     public CTM(IEventBus bus) {
-         bus.addListener(this::registerModelLoaders);
-         bus.addListener(this::registerPayloads);
+        bus.addListener(CTM::registerPayloads);
     }
 
-    @SubscribeEvent
-    public void registerPayloads(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar(CTM.MOD_ID).versioned("1");
-        registrar.playToClient(CTMOffsetSyncPacket.TYPE, CTMOffsetSyncPacket.STREAM_CODEC, CTMOffsetSyncPacket::handle);
-    }
-
-    @SubscribeEvent
-    public void registerModelLoaders(RegisterBlockStateModels event) {
-        event.registerModel(CTM_MODEL_ID, UnbakedConnectedTextureBlockStateModel.CODEC);
-        event.registerModel(LAYERED_CTM_MODEL_ID, UnbakedLayeredCTMBlockStateModel.CODEC);
-        event.registerModel(ELDRITCH_MODEL_ID, UnbakedEldritchBlockStateModel.CODEC);
-        event.registerDefinition(CTM_DEFINITION_ID, CTMBlockModelDefinition.CODEC);
-        event.registerDefinition(LAYERED_CTM_MODEL_ID, LayeredCTMBlockModelDefinition.CODEC);
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        event.registrar("1").playToClient(CTMOffsetSyncPacket.TYPE, CTMOffsetSyncPacket.STREAM_CODEC, CTMOffsetSyncPacket::handle);
     }
 }

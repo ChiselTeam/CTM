@@ -3,31 +3,32 @@ package io.github.chiselteam.ctm.client;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
 import io.github.chiselteam.ctm.api.geometry.CTMKeyWithOverlays;
-import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
+import io.github.chiselteam.ctm.api.model.ConnectedTextureBlockModelPart;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import io.github.chiselteam.ctm.client.model.BakedTexture;
+import io.github.chiselteam.ctm.client.model.CTMBakedModel;
+import io.github.chiselteam.ctm.client.model.CTMItemView;
+import io.github.chiselteam.ctm.client.model.CTMModelPart;
+import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
-import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public abstract class AbstractConnectedTextureBlockStateModel<K> implements DynamicBlockStateModel, CTMQuadStorage {
+public abstract class AbstractConnectedTextureBlockStateModel<K> implements CTMBakedModel, CTMQuadStorage {
 
     private static final int MAX_CACHED_PARTS = 256;
 
@@ -37,47 +38,28 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     protected final Map<Direction, BakedQuad[]> baseQuads;
     protected final TextureAtlasSprite particle;
     protected final CTMVariant variant;
-    protected final Material.Baked particleMaterial;
+    protected final BakedTexture particleMaterial;
     protected final CTMBlockPredicate connectionPredicate;
     protected final List<CTMOverlayRule> overlayRules;
     protected final boolean ambientOcclusion;
 
     private volatile LoadingCache<Object, ConnectedTextureBlockModelPart> parts;
 
-    protected final int materialFlags;
-
-    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, int materialFlags, boolean ambientOcclusion) {
+    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, boolean ambientOcclusion) {
         this.connectedFaces = connectedFaces;
         this.unculledFaces = unculledFaces;
         this.renderOverlayOnAllFaces = renderOverlayOnAllFaces;
         this.baseQuads = baseQuads;
         this.particle = particle;
         this.variant = variant;
-        this.particleMaterial = new Material.Baked(particle, false);
+        this.particleMaterial = new BakedTexture(particle, false);
         this.connectionPredicate = connectionPredicate;
         this.overlayRules = overlayRules;
-        this.materialFlags = materialFlags;
         this.ambientOcclusion = ambientOcclusion;
     }
 
-    protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, int materialFlags) {
-        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, materialFlags, true);
-    }
-
     protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules) {
-        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeFlags(baseQuads), true);
-    }
-
-    private static int computeFlags(Map<Direction, BakedQuad[]> baseQuads) {
-        int flags = 0;
-        for (BakedQuad[] quads : baseQuads.values()) {
-            for (BakedQuad quad : quads) {
-                if (quad != null) {
-                    flags |= quad.materialInfo().flags();
-                }
-            }
-        }
-        return flags;
+        this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, true);
     }
 
     protected AbstractConnectedTextureBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, TextureAtlasSprite particle, CTMVariant variant) {
@@ -85,7 +67,7 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     }
 
     @Override
-    public @NonNull Object createGeometryKey(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random) {
+    public @NotNull Object createGeometryKey(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random) {
         K baseKey = computeCTMKey(level, pos, state, random);
         long mask = computeOverlayMask(level, pos, state);
         Object key = mask == 0 ? baseKey : new CTMKeyWithOverlays<>(baseKey, mask);
@@ -93,7 +75,7 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     }
 
     @Override
-    public void collectParts(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random, @NonNull List<BlockStateModelPart> parts) {
+    public void collectParts(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random, @NotNull List<CTMModelPart> parts) {
         K baseKey = computeCTMKey(level, pos, state, random);
         long mask = computeOverlayMask(level, pos, state);
         Object key = mask == 0 ? baseKey : new CTMKeyWithOverlays<>(baseKey, mask);
@@ -130,6 +112,18 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     }
 
     protected abstract K computeCTMKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random);
+
+    @Override
+    public void collectParts(RandomSource random, List<CTMModelPart> parts) {
+        BlockState state = variant.targetBlock().defaultBlockState();
+        var view = new CTMItemView(state);
+        parts.add(partCache().getUnchecked(computeCTMKey(view, BlockPos.ZERO, state, random)));
+    }
+
+    @Override
+    public boolean useAmbientOcclusion() {
+        return ambientOcclusion;
+    }
 
     protected abstract ConnectedTextureBlockModelPart createPart(K key, long overlayMask);
 
@@ -171,12 +165,8 @@ public abstract class AbstractConnectedTextureBlockStateModel<K> implements Dyna
     public record GeometryKey(AbstractConnectedTextureBlockStateModel<?> model, Object key) { }
 
     @Override
-    public Material.@NonNull Baked particleMaterial() {
+    public BakedTexture particleMaterial() {
         return particleMaterial;
     }
 
-    @Override
-    public int materialFlags() {
-        return materialFlags;
-    }
 }

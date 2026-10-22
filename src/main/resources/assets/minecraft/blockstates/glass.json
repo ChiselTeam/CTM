@@ -1,11 +1,7 @@
 {
-  "neoforge:definition_type": "ctm:connected_texture_model",
-  "model_location": "ctm:block/glass_16x_test",
-  "connected_faces": [
-    "all"
-  ],
-  "variant": {
-    "block": "minecraft:glass",
-    "kind": "standard"
+  "variants": {
+    "": {
+      "model": "minecraft:block/ctm/glass"
+    }
   }
 }

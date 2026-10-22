@@ -23,12 +23,12 @@ public enum CTMLogicAR {
 
         long seed = (long)x * 3129871L ^ (long)z * 116129781L ^ (long)y;
         seed = seed * seed * 42317861L + seed * 11L;
-        
+
         int num = ((seed & 1) == 0) ? 0 : 2;
         boolean type = x % 2 != 0;
         if (y % 2 == 0) type = !type;
         if (z % 2 == 0) type = !type;
-        
+
         num += type ? 0 : 1;
         return values()[num % 4];
     }

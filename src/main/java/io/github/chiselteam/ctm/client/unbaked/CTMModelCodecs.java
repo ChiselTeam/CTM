@@ -1,7 +1,9 @@
 package io.github.chiselteam.ctm.client.unbaked;
 
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.chiselteam.ctm.api.model.CTMOverlayCondition;
@@ -9,10 +11,11 @@ import io.github.chiselteam.ctm.api.model.CTMOverlayConditions;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.ResolvedBlockStateMatcher;
-import net.minecraft.client.resources.model.ResolvedModel;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.*;
@@ -21,7 +24,7 @@ public class CTMModelCodecs {
 
     public static final MapCodec<ResolvedBlockStateMatcher> MATCHER_MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             BuiltInRegistries.BLOCK.byNameCodec().fieldOf("id").forGetter(ResolvedBlockStateMatcher::block),
-            Codec.unboundedMap(Codec.STRING, Codec.PASSTHROUGH).optionalFieldOf("state", Map.of()).forGetter(_ -> Map.of())
+            Codec.unboundedMap(Codec.STRING, Codec.PASSTHROUGH).optionalFieldOf("state", Map.of()).forGetter(CTMModelCodecs::encodeProperties)
     ).apply(instance, (block, states) -> {
         Map<Property<?>, Comparable<?>> properties = new HashMap<>();
         for (Map.Entry<String, Dynamic<?>> entry : states.entrySet()) {
@@ -29,8 +32,8 @@ public class CTMModelCodecs {
             if (property == null) {
                 throw new IllegalArgumentException("Unknown property " + entry.getKey() + " for block " + BuiltInRegistries.BLOCK.getKey(block));
             }
-            String valueStr = entry.getValue().asString().result().orElseGet(() -> 
-                entry.getValue().asNumber().result().map(Object::toString).orElseGet(() -> 
+            String valueStr = entry.getValue().asString().result().orElseGet(() ->
+                entry.getValue().asNumber().result().map(Object::toString).orElseGet(() ->
                 entry.getValue().asBoolean().result().map(Object::toString).orElse(""))
             );
             Optional<? extends Comparable<?>> value = property.getValue(valueStr);
@@ -46,7 +49,11 @@ public class CTMModelCodecs {
 
     public static final Codec<CTMBlockPredicate> CONNECTION_ENTRY_CODEC = MATCHER_CODEC.xmap(
             CTMBlockPredicate.BlockStateMatchPredicate::new,
-            predicate -> ((CTMBlockPredicate.BlockStateMatchPredicate) predicate).matcher()
+            predicate -> {
+                if (predicate instanceof CTMBlockPredicate.BlockStateMatchPredicate(ResolvedBlockStateMatcher matcher)) return matcher;
+                if (predicate instanceof CTMBlockPredicate.BlockMatchPredicate(Block block)) return new ResolvedBlockStateMatcher(block, Map.of());
+                throw new IllegalArgumentException("Connection JSON requires block or block-state predicates");
+            }
     );
 
     public static final Codec<CTMBlockPredicate> CONNECTS_TO_CODEC = CONNECTION_ENTRY_CODEC.listOf().xmap(
@@ -80,18 +87,38 @@ public class CTMModelCodecs {
     }));
 
     public static final MapCodec<CTMOverlayCondition> ACTUAL_CONDITION_MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            MATCHER_CODEC.optionalFieldOf("self").forGetter(_ -> Optional.empty()),
-            NEIGHBOR_ENTRY_MAP_CODEC.codec().listOf().optionalFieldOf("neighbors", List.of()).forGetter(_ -> List.of())
+            MATCHER_CODEC.optionalFieldOf("self").forGetter(condition -> conditionEntries(condition).stream()
+                    .filter(CTMOverlayConditions.SelfStateCondition.class::isInstance)
+                    .map(CTMOverlayConditions.SelfStateCondition.class::cast)
+                    .map(CTMOverlayConditions.SelfStateCondition::matcher).findFirst()),
+            NEIGHBOR_ENTRY_MAP_CODEC.codec().listOf().optionalFieldOf("neighbors", List.of()).forGetter(condition -> conditionEntries(condition).stream()
+                    .filter(entry -> entry instanceof CTMOverlayConditions.NeighborCondition || entry instanceof CTMOverlayConditions.AnyNeighborCondition).toList())
     ).apply(instance, (Optional<ResolvedBlockStateMatcher> selfMatch, List<CTMOverlayCondition> neighbors) -> {
         List<CTMOverlayCondition> conditions = new ArrayList<>();
         selfMatch.ifPresent(matcher -> conditions.add(new CTMOverlayConditions.SelfStateCondition(matcher)));
         conditions.addAll(neighbors);
-        if (conditions.isEmpty()) return (_, _, _, _) -> true;
+        if (conditions.isEmpty()) return (level, pos, state, face) -> true;
         if (conditions.size() == 1) return conditions.getFirst();
         return new CTMOverlayConditions.AllOfOverlayCondition(conditions);
     }));
 
     public static final Codec<CTMOverlayCondition> ACTUAL_CONDITION_CODEC = ACTUAL_CONDITION_MAP_CODEC.codec();
+
+    private static List<CTMOverlayCondition> conditionEntries(CTMOverlayCondition condition) {
+        if (condition instanceof CTMOverlayConditions.AllOfOverlayCondition(List<CTMOverlayCondition> conditions)) {
+            return conditions.stream().flatMap(entry -> conditionEntries(entry).stream()).toList();
+        }
+        return List.of(condition);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static Map<String, Dynamic<?>> encodeProperties(ResolvedBlockStateMatcher matcher) {
+        Map<String, Dynamic<?>> states = new HashMap<>();
+        matcher.properties().forEach((property, value) -> states.put(property.getName(), new Dynamic<>(
+                JsonOps.INSTANCE,
+                new JsonPrimitive(((Property) property).getName(value)))));
+        return states;
+    }
 
     public record UnbakedOverlayRule(
             String material,
@@ -101,8 +128,8 @@ public class CTMModelCodecs {
             int tintIndex,
             int emissivity
     ) {
-        public CTMOverlayRule bake(ResolvedModel model) {
-            Material mat = model.getTopTextureSlots().getMaterial(material);
+        public CTMOverlayRule bake(BlockModel model) {
+            Material mat = model.getMaterial(material);
             return new CTMOverlayRule(mat, faces, condition, priority, tintIndex, emissivity);
         }
     }
@@ -123,7 +150,7 @@ public class CTMModelCodecs {
     public static final Codec<UnbakedOverlayRule> OVERLAY_RULE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("material").forGetter(UnbakedOverlayRule::material),
             FACES_CODEC.optionalFieldOf("faces", EnumSet.allOf(Direction.class)).forGetter(UnbakedOverlayRule::faces),
-            ACTUAL_CONDITION_CODEC.optionalFieldOf("conditions", (_, _, _, _) -> true).forGetter(UnbakedOverlayRule::condition),
+            ACTUAL_CONDITION_CODEC.optionalFieldOf("conditions", (level, pos, state, face) -> true).forGetter(UnbakedOverlayRule::condition),
             Codec.INT.optionalFieldOf("priority", 0).forGetter(UnbakedOverlayRule::priority),
             Codec.INT.optionalFieldOf("tint_index", -1).forGetter(UnbakedOverlayRule::tintIndex),
             Codec.INT.optionalFieldOf("emissivity", 0).forGetter(UnbakedOverlayRule::emissivity)

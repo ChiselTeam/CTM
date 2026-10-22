@@ -1,59 +1,59 @@
 package io.github.chiselteam.ctm.client.baked;
 
+import io.github.chiselteam.ctm.client.model.BakedTexture;
 import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.world.level.BlockAndTintGetter;
+import io.github.chiselteam.ctm.client.model.CTMBakedModel;
+import io.github.chiselteam.ctm.client.model.CTMModelPart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class LayeredCTMBlockStateModel implements DynamicBlockStateModel, CTMQuadStorage {
+public final class LayeredCTMBlockStateModel implements CTMBakedModel, CTMQuadStorage {
 
-    private final List<BlockStateModel> layers;
-    private final Material.Baked particleMaterial;
-    private final int materialFlags;
+    private final List<CTMBakedModel> layers;
+    private final BakedTexture particleMaterial;
 
-    public LayeredCTMBlockStateModel(List<BlockStateModel> layers) {
+    public LayeredCTMBlockStateModel(List<CTMBakedModel> layers) {
         if (layers.isEmpty()) throw new IllegalArgumentException("A layered CTM model requires at least one layer");
         this.layers = List.copyOf(layers);
         this.particleMaterial = layers.getFirst().particleMaterial();
-        this.materialFlags = layers.stream()
-                .mapToInt(BlockStateModel::materialFlags)
-                .reduce(0, (left, right) -> left | right);
     }
 
     @Override
-    public void visitChildModels(Consumer<BlockStateModel> visitor) {
+    public void visitChildModels(Consumer<CTMBakedModel> visitor) {
         layers.forEach(visitor);
     }
 
     @Override
-    public @NonNull Object createGeometryKey(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random) {
+    public @NotNull Object createGeometryKey(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random) {
         return new GeometryKey(layers.stream()
                 .map(layer -> layer.createGeometryKey(level, pos, state, random))
                 .toList());
     }
 
     @Override
-    public void collectParts(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random, @NonNull List<BlockStateModelPart> parts) {
+    public void collectParts(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random, @NotNull List<CTMModelPart> parts) {
         layers.forEach(layer -> layer.collectParts(level, pos, state, random, parts));
     }
 
     @Override
-    public Material.@NonNull Baked particleMaterial() {
-        return particleMaterial;
+    public void collectParts(RandomSource random, List<CTMModelPart> parts) {
+        layers.forEach(layer -> layer.collectParts(random, parts));
     }
 
     @Override
-    public int materialFlags() {
-        return materialFlags;
+    public boolean useAmbientOcclusion() {
+        return layers.getFirst().useAmbientOcclusion();
+    }
+
+    @Override
+    public BakedTexture particleMaterial() {
+        return particleMaterial;
     }
 
     private record GeometryKey(List<Object> layerKeys) {}
