@@ -10,6 +10,7 @@ import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
 import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.client.AbstractUnbakedConnectedTextureBlockStateModel;
 import io.github.chiselteam.ctm.client.baked.EldritchBlockStateModel;
+import io.github.chiselteam.ctm.impl.model.CTMBakeCache;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.renderer.block.dispatch.VariantMutator;
@@ -100,8 +101,20 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
     }
 
     @Override
+    public BlockStateModel.@NonNull UnbakedRoot asRoot() {
+        return CTMBakeCache.root(this);
+    }
+
+    private final CTMBakeCache.Memo bakeMemo = new CTMBakeCache.Memo();
+
+    @Override
     public @NonNull BlockStateModel bake(@NonNull ModelBaker baker) {
-        BlockStateModel baked = forKind(variant.kind()).bake(baker);
+        return bakeMemo.bake(baker, () -> bakeUncached(baker));
+    }
+
+    private BlockStateModel bakeUncached(ModelBaker baker) {
+        var recipe = forKind(variant.kind());
+        BlockStateModel baked = recipe.bakeDeferredIfEligible(baker);
         return eldritch ? new EldritchBlockStateModel(baked) : baked;
     }
 

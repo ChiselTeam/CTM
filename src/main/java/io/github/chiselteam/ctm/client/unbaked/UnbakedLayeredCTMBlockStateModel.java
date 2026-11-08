@@ -3,6 +3,7 @@ package io.github.chiselteam.ctm.client.unbaked;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.chiselteam.ctm.client.baked.LayeredCTMBlockStateModel;
+import io.github.chiselteam.ctm.impl.model.CTMBakeCache;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
@@ -26,6 +27,11 @@ public record UnbakedLayeredCTMBlockStateModel(List<UnbakedConnectedTextureBlock
     @Override
     public void resolveDependencies(@NonNull Resolver resolver) {
         layers.forEach(layer -> layer.resolveDependencies(resolver));
+    }
+
+    @Override
+    public BlockStateModel.@NonNull UnbakedRoot asRoot() {
+        return CTMBakeCache.root(this, new CTMBakeCache.Memo());
     }
 
     @Override

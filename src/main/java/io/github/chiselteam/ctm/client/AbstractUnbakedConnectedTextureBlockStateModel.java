@@ -5,8 +5,10 @@ import com.mojang.math.Transformation;
 import io.github.chiselteam.ctm.api.model.CTMOverlayRule;
 import io.github.chiselteam.ctm.api.model.CTMVariant;
 import io.github.chiselteam.ctm.api.strategy.CTMBlockPredicate;
+import io.github.chiselteam.ctm.api.strategy.CTMKind;
 import io.github.chiselteam.ctm.api.strategy.CTMLogic;
 import io.github.chiselteam.ctm.client.unbaked.CTMModelCodecs;
+import io.github.chiselteam.ctm.impl.model.DeferredCTMModel;
 import io.github.chiselteam.ctm.impl.texture.CTMTextureSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
@@ -98,6 +100,45 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     }
 
     public abstract @NonNull BlockStateModel bake(@NonNull ModelBaker baker);
+
+    public final BlockStateModel bakeDeferredIfEligible(ModelBaker baker) {
+        var resolved = baker.getModel(modelLocation);
+        var slots = resolved.getTopTextureSlots();
+        var transform = resolved.getTopAdditionalProperties().getOrDefault(NeoForgeModelProperties.TRANSFORM, Transformation.IDENTITY);
+
+        // Keep unusual root transforms eager until their metadata and ownership are validated.
+        if (!transform.isIdentity()) return bake(baker);
+        var names = new HashSet<String>();
+        for (var current = resolved; current != null; current = current.parent()) {
+            var data = current.wrapped().textureSlots();
+            if (data != null) names.addAll(data.values().keySet());
+        }
+
+        var materials = new HashMap<Material, Material.Baked>();
+        for (var name : names) {
+            var material = slots.getMaterial(name);
+            if (material != null) materials.computeIfAbsent(material, m -> baker.materials().get(m, resolved));
+        }
+
+        for (var id : textureSlots.values()) {
+            var material = new Material(id, false);
+            materials.computeIfAbsent(material, m -> baker.materials().get(m, resolved));
+        }
+
+        for (var material : materials.values()) {
+            var contents = material.sprite().contents();
+            if (material.forceTranslucent() || contents.isAnimated()
+                    || contents.computeTransparency(0, 0, 1, 1).hasTranslucent()) return bake(baker);
+        }
+        Material particle = slots.getMaterial("particle");
+        if (variant.kind() != CTMKind.AR && textureSlots.containsKey("particle"))
+            particle = new Material(textureSlots.get("particle"), false);
+
+        // Explicit particle metadata is required; fallback differences remain on the eager path.
+        if (particle == null || !materials.containsKey(particle)) return bake(baker);
+        var snapshot = new DeferredCTMModel.Inputs(modelLocation, slots, Map.copyOf(materials), baker.interner());
+        return new DeferredCTMModel(getClass().getSimpleName(), new Material.Baked(materials.get(particle).sprite(), false), () -> bake(snapshot), snapshot);
+    }
 
     protected void prepareBakery(ModelBaker baker) {
         model = baker.getModel(modelLocation);
