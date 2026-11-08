@@ -27,14 +27,12 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
     protected final Map<Direction, BakedQuad[]> horizontalQuads;
     protected final Map<Direction, BakedQuad[]> verticalQuads;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
-    private final Map<Direction, BakedQuad[]> effectiveBaseQuads;
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> horizontalQuads, Map<Direction, BakedQuad[]> verticalQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, horizontalQuads, verticalQuads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant, connectionPredicate, overlayRules, ambientOcclusion);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
         this.ruleQuads = ruleQuads;
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces,
@@ -48,11 +46,10 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
                                          CTMBlockPredicate connectionPredicate,
                                          List<CTMOverlayRule> overlayRules,
                                          Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, horizontalQuads, verticalQuads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant, connectionPredicate, overlayRules);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
         this.ruleQuads = ruleQuads;
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     public DirectionalCTMBlockStateModel(Set<Direction> connectedFaces,
@@ -63,11 +60,10 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
                                          Map<Direction, BakedQuad[]> verticalQuads,
                                          TextureAtlasSprite particle,
                                          CTMVariant variant) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, horizontalQuads, verticalQuads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant);
         this.horizontalQuads = horizontalQuads;
         this.verticalQuads = verticalQuads;
         this.ruleQuads = Map.of();
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     @Override
@@ -75,7 +71,6 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         super.visitQuadArrays(visitor);
         horizontalQuads.values().forEach(visitor);
         verticalQuads.values().forEach(visitor);
-        effectiveBaseQuads.values().forEach(visitor);
     }
 
     @Override
@@ -114,7 +109,7 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
     @Override
     protected ConnectedTextureBlockModelPart createPart(DirectionalCTMKey key, long overlayMask) {
         return CTMPartBuilder.create(
-                effectiveBaseQuads,
+                baseQuads,
                 unculledFaces,
                 particleMaterial,
                 ambientOcclusion,
@@ -144,7 +139,10 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         }
     }
 
-    private Map<Direction, BakedQuad[]> computeEffectiveBaseQuads() {
+    private static Map<Direction, BakedQuad[]> renderedBaseQuads(
+            Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> horizontalQuads,
+            Map<Direction, BakedQuad[]> verticalQuads, CTMVariant variant,
+            Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces) {
         if (variant.waterOffset()) {
             return baseQuads;
         }
@@ -160,7 +158,7 @@ public class DirectionalCTMBlockStateModel extends AbstractConnectedTextureBlock
         Map<Direction, BakedQuad[]> result = new EnumMap<>(Direction.class);
         for (Map.Entry<Direction, BakedQuad[]> entry : baseQuads.entrySet()) {
             Direction side = entry.getKey();
-            if (shouldRenderDirectionalOverlay(side) && tileQuads.get(side) != null) {
+            if ((connectedFaces.contains(side) || renderOverlayOnAllFaces) && tileQuads.get(side) != null) {
                 continue;
             }
             result.put(side, entry.getValue());

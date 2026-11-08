@@ -81,6 +81,8 @@ dependencies {
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+    workingDir = layout.buildDirectory.dir('test-run').get().asFile
+    doFirst { workingDir.mkdirs() }
 }
 
 tasks.register('publishCurseForge', TaskPublishCurseForge) {

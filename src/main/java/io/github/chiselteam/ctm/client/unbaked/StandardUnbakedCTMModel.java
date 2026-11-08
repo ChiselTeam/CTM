@@ -68,13 +68,18 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
         var from = element.getFirst();
         var to = element.getSecond();
         int center = 8;
+        boolean lazy = !isDeferredBake() && getClass() == StandardUnbakedCTMModel.class
+                && overlays.isEmpty() && !eldritch && !variant.waterOffset() && connectedFaces.size() == 6
+                && from.x() == 0 && from.y() == 0 && from.z() == 0
+                && to.x() == 16 && to.y() == 16 && to.z() == 16
+                && state.transformation().isIdentity() && !state.isUvLocked();
 
         for (var face : Direction.values()) {
             var cull = getCullface(face, from, to);
             var planeDirections = CTMFaceOrientation.localDirections(face);
 
             var baseQuadList = new ArrayList<BakedQuad>();
-            var connQuads = new BakedQuad[4][CTMLogic.values().length];
+            var connQuads = lazy ? null : new BakedQuad[4][CTMLogic.values().length];
 
             for (int c = 0; c < 4; c++) {
                 var corner = face.getNormal().offset(planeDirections[c].getNormal()).offset(planeDirections[(c + 1) % 4].getNormal()).offset(1, 1, 1).multiply(8);
@@ -100,12 +105,18 @@ public class StandardUnbakedCTMModel extends AbstractUnbakedConnectedTextureBloc
 
                 var offsets = getOffsets(face, qFrom, qTo);
 
-                bakeStandaloneConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, standardTextures, connQuads[c], unculledFaces);
+                if (!lazy) bakeStandaloneConnectedQuads(baker, state, face, cull, offsets[0], offsets[1], qUvs, standardTextures, connQuads[c], unculledFaces);
             }
 
             if (!baseQuadList.isEmpty()) baseQuads.put(face, baseQuadList.toArray(new BakedQuad[0]));
-            connectedQuads.put(face, connQuads);
+            if (!lazy) connectedQuads.put(face, connQuads);
         }
+
+        if (lazy) return new StandardCTMBlockStateModel(connectedFaces, renderOverlayOnAllFaces, baseQuads,
+                new io.github.chiselteam.ctm.impl.model.LazyStandardGeometry(
+                        io.github.chiselteam.ctm.impl.model.CTMBakeCache.scope(baker),
+                        standardTextures, tintIndex, emissivity, shade, ambientOcclusion),
+                bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, ambientOcclusion);
 
         var bakedOverlays = bakeOverlays();
         return new StandardCTMBlockStateModel(remapDirections(connectedFaces, connectedQuads), remapDirections(unculledFaces, connectedQuads), renderOverlayOnAllFaces, remapQuadDirections(baseQuads), remapQuadDirections(connectedQuads), bakedParticle != null ? bakedParticle.sprite() : null, variant, connectionPredicate, bakedOverlays, remapRuleQuadDirections(bakeOverlayQuads(baker, bakedOverlays, from, to, state)), ambientOcclusion, CTMFaceOrientation.of(state));

@@ -47,7 +47,13 @@ public final class CTMGeometryLoader implements IGeometryLoader<CTMGeometryLoade
         return new Geometry(codec.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new));
     }
 
-    public record Geometry(CTMUnbakedModel model) implements IUnbakedGeometry<Geometry> {
+    public static final class Geometry implements IUnbakedGeometry<Geometry> {
+        private final CTMUnbakedModel model;
+        private final io.github.chiselteam.ctm.impl.model.CTMBakeCache.Memo memo =
+                new io.github.chiselteam.ctm.impl.model.CTMBakeCache.Memo();
+
+        public Geometry(CTMUnbakedModel model) { this.model = model; }
+        public CTMUnbakedModel model() { return model; }
         @Override
         public void resolveParents(@NotNull Function<ResourceLocation, UnbakedModel> getter, @NotNull IGeometryBakingContext context) {
             model.resolveDependencies(location -> getter.apply(location).resolveParents(getter));
@@ -55,7 +61,8 @@ public final class CTMGeometryLoader implements IGeometryLoader<CTMGeometryLoade
 
         @Override
         public @NotNull BakedModel bake(@NotNull IGeometryBakingContext context, @NotNull ModelBaker baker, @NotNull Function<Material, TextureAtlasSprite> sprites, @NotNull ModelState state, @NotNull ItemOverrides overrides) {
-            var baked = model.bake(new CTMBakingContext(baker, sprites, CTMModelState.of(state), context, context.useAmbientOcclusion()));
+            var inputs = new CTMBakingContext(baker, sprites, CTMModelState.of(state), context, context.useAmbientOcclusion());
+            var baked = memo.bake(inputs, () -> model.bake(inputs));
             return new Baked(baked, context, overrides);
 
         }

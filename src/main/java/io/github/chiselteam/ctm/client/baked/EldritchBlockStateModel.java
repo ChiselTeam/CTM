@@ -27,11 +27,12 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
     private static final int MAX_CACHE_ENTRIES = 4096;
 
     private final CTMBakedModel delegate;
+    private final boolean cacheByGeometryKey;
 
-    private final Map<Object, List<CTMModelPart>> cache = Collections.synchronizedMap(
+    private final Map<Long, CachedParts> cache = Collections.synchronizedMap(
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<Object, List<CTMModelPart>> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<Long, CachedParts> eldest) {
                     return size() > MAX_CACHE_ENTRIES;
                 }
             }
@@ -39,6 +40,9 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
 
     public EldritchBlockStateModel(CTMBakedModel delegate) {
         this.delegate = delegate;
+        this.cacheByGeometryKey = delegate.getClass() == io.github.chiselteam.ctm.impl.model.DeferredCTMModel.class
+                || (delegate instanceof io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel<?>
+                && delegate.getClass().getPackageName().equals(EldritchBlockStateModel.class.getPackageName()));
     }
 
     @Override
@@ -47,9 +51,9 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
     }
 
     @Override
-    public @NotNull Object createGeometryKey(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random) {
+    public @Nullable Object createGeometryKey(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random) {
         Object delegateKey = computeDelegateGeometryKey(level, pos, state, random);
-        return new EldritchGeometryKey(pos.asLong(), delegateKey);
+        return delegateKey == null ? null : new EldritchGeometryKey(pos.asLong(), delegateKey);
     }
 
     private Object computeDelegateGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
@@ -58,10 +62,11 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
 
     @Override
     public void collectParts(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull RandomSource random, @NotNull List<CTMModelPart> parts) {
-        Object key = createGeometryKey(level, pos, state, random);
-        List<CTMModelPart> cached = cache.get(key);
-        if (cached != null) {
-            parts.addAll(cached);
+        var delegateKey = cacheByGeometryKey ? computeDelegateGeometryKey(level, pos, state, random) : null;
+        long position = pos.asLong();
+        var cached = delegateKey == null ? null : cache.get(position);
+        if (cached != null && cached.delegateKey().equals(delegateKey)) {
+            parts.addAll(cached.parts());
             return;
         }
 
@@ -74,7 +79,11 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
         }
 
         List<CTMModelPart> immutable = List.copyOf(transformed);
-        cache.put(key, immutable);
+        if (delegateKey != null) {
+            synchronized (cache) {
+                if (cache.get(position) == cached) cache.put(position, new CachedParts(delegateKey, immutable));
+            }
+        }
         parts.addAll(immutable);
     }
 
@@ -134,5 +143,6 @@ public class EldritchBlockStateModel implements CTMBakedModel, CTMQuadStorage {
         }
     }
 
+    private record CachedParts(Object delegateKey, List<CTMModelPart> parts) {}
     private record EldritchGeometryKey(long pos, Object delegateKey) {}
 }

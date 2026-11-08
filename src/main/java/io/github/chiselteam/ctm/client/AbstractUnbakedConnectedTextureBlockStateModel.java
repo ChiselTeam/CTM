@@ -25,6 +25,7 @@ import java.util.*;
 
 public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements CTMUnbakedModel {
     protected BlockModel model;
+    private Map<String, Material> capturedMaterials;
     protected CTMModelState state;
     protected Transformation rootTransform;
 
@@ -93,7 +94,54 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
 
     public abstract @NotNull CTMBakedModel bake(@NotNull CTMBakingContext baker);
 
+    public final CTMBakedModel bakeDeferredIfEligible(CTMBakingContext baker) {
+        prepareBakery(baker);
+        if (!rootTransform.isIdentity()) return bake(baker);
+
+        var names = new HashSet<String>(List.of("base_texture", "all", "layer0", "particle", "top", "bottom", "side"));
+        for (var current = model; current != null; current = current.parent)
+            names.addAll(current.textureMap.keySet());
+        names.addAll(textureSlots.keySet());
+        for (var overlay : overlays) names.add(overlay.material());
+
+        var materials = new HashMap<String, Material>();
+        var sprites = new HashMap<Material, net.minecraft.client.renderer.texture.TextureAtlasSprite>();
+        for (var name : names) {
+            var material = getMaterial(name);
+            if (material == null) continue;
+            materials.put(name, material);
+            var sprite = sprites.computeIfAbsent(material, baker.spriteGetter());
+            if (sprite.contents().getUniqueFrames().count() > 1
+                    || CTMRenderLayers.transparency(sprite) == CTMRenderLayers.Transparency.TRANSLUCENT)
+                return bake(baker);
+        }
+
+        var particle = materials.get("particle");
+        if (particle == null) return bake(baker);
+        var scope = io.github.chiselteam.ctm.impl.model.CTMBakeCache.scope(baker);
+        var capturedSprites = Map.copyOf(sprites);
+        var inputs = new io.github.chiselteam.ctm.impl.model.DeferredCTMModel.Inputs(materials, capturedSprites, state);
+        // The prepared state and resolved texture names suffice for all built-in recipes.
+        // Do not retain BlockModel parents, the original bakery, or its sprite getter.
+        model = null;
+        var snapshot = new CTMBakingContext(null, inputs, state, null, ambientOcclusion);
+        return new io.github.chiselteam.ctm.impl.model.DeferredCTMModel(getClass().getSimpleName(),
+                new BakedTexture(capturedSprites.get(particle), false), ambientOcclusion,
+                () -> { synchronized (this) { return bake(snapshot); } }, scope);
+    }
+
+    protected final boolean isDeferredBake() {
+        return capturedMaterials != null;
+    }
     protected void prepareBakery(CTMBakingContext baker) {
+        if (baker.spriteGetter() instanceof io.github.chiselteam.ctm.impl.model.DeferredCTMModel.Inputs inputs) {
+            capturedMaterials = inputs.materials();
+            model = null;
+            state = inputs.state();
+            rootTransform = Transformation.identity();
+            return;
+        }
+        capturedMaterials = null;
         model = baker.getModel(modelLocation);
         state = CTMModelState.of(new SimpleModelState(baker.modelState().getRotation().compose(modelState.asModelState().getRotation()), baker.modelState().isUvLocked() || modelState.uvLock()));
         rootTransform = model.customData.getRootTransform().compose(baker.context().getRootTransform());
@@ -113,6 +161,7 @@ public abstract class AbstractUnbakedConnectedTextureBlockStateModel implements 
     }
 
     protected Material getMaterial(String name) {
+        if (capturedMaterials != null) return capturedMaterials.get(name);
         ResourceLocation override = textureSlots.get(name);
         if (override != null) {
             return new Material(InventoryMenu.BLOCK_ATLAS, override);

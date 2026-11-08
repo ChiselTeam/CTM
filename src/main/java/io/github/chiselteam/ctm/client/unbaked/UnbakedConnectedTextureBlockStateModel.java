@@ -99,9 +99,16 @@ public class UnbakedConnectedTextureBlockStateModel extends AbstractUnbakedConne
         return CODEC;
     }
 
+    private final io.github.chiselteam.ctm.impl.model.CTMBakeCache.Memo bakeMemo =
+            new io.github.chiselteam.ctm.impl.model.CTMBakeCache.Memo();
+
     @Override
     public @NotNull CTMBakedModel bake(@NotNull CTMBakingContext baker) {
-        CTMBakedModel baked = forKind(variant.kind()).bake(baker);
+        return bakeMemo.bake(baker, () -> bakeUncached(baker));
+    }
+
+    private CTMBakedModel bakeUncached(CTMBakingContext baker) {
+        CTMBakedModel baked = forKind(variant.kind()).bakeDeferredIfEligible(baker);
         return eldritch ? new EldritchBlockStateModel(baked) : baked;
     }
 
