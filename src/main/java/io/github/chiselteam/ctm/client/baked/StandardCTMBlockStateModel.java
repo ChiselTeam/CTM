@@ -27,6 +27,38 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     protected final Map<Direction, BakedQuad[][]> connectedQuads;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
     protected final CTMFaceOrientation orientation;
+    private boolean deferredGeometry;
+    private int deferredFlags;
+    private io.github.chiselteam.ctm.impl.model.LazyStandardGeometry recipe;
+    private volatile Map<Direction, BakedQuad[][]> realized;
+
+    public StandardCTMBlockStateModel(Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces,
+                                      Map<Direction, BakedQuad[]> baseQuads, io.github.chiselteam.ctm.impl.model.LazyStandardGeometry recipe,
+                                      TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate predicate, boolean ambientOcclusion) {
+        this(connectedFaces, Set.of(), renderOverlayOnAllFaces, baseQuads, Map.of(), particle, variant,
+                predicate, List.of(), Map.of(), ambientOcclusion, CTMFaceOrientation.IDENTITY);
+        this.deferredGeometry = true;
+        this.recipe = recipe;
+        this.deferredFlags = recipe.flags();
+    }
+
+    @Override
+    public int materialFlags() {
+        return super.materialFlags() | deferredFlags;
+    }
+
+    private Map<Direction, BakedQuad[][]> lazyQuads() {
+        var result = realized;
+        if (result == null) synchronized (this) {
+            result = realized;
+            if (result == null) {
+                result = recipe.bake();
+                recipe = null;
+                realized = result;
+            }
+        }
+        return result;
+    }
 
     public StandardCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[][]> connectedQuads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
         this(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, connectedQuads, particle, variant, connectionPredicate, overlayRules, ruleQuads, ambientOcclusion, CTMFaceOrientation.IDENTITY);
@@ -78,6 +110,12 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     @Override
     public void visitQuadArrays(Consumer<BakedQuad[]> visitor) {
         super.visitQuadArrays(visitor);
+        var pending = recipe;
+        if (pending != null) baseQuads.values().forEach(pending::seedBase);
+        var ready = realized;
+        if (ready != null) ready.values().forEach(corners -> {
+            for (var quads : corners) visitor.accept(quads);
+        });
         connectedQuads.values().forEach(corners -> {
             if (corners != null) {
                 for (BakedQuad[] quads : corners) visitor.accept(quads);
@@ -133,7 +171,7 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
     private int computeFace(BlockAndTintGetter level, BlockPos pos, BlockState state, Direction face, CTMFaceOrientation orientation) {
         int packed = 0;
 
-        for(int c = 0; c < 4; c++) {
+        for (int c = 0; c < 4; c++) {
             Direction s1 = orientation.cornerDirection(face, c);
             Direction s2 = orientation.cornerDirection(face, (c + 1) % 4);
 
@@ -151,6 +189,6 @@ public class StandardCTMBlockStateModel extends AbstractConnectedTextureBlockSta
 
     protected void appendConnectedQuads(StandardCTMKey key, Direction side, List<BakedQuad> faceQuads) {
         int pattern = connectedFaces.contains(side) ? key.patternIndex(side) : 0;
-        CTMPartBuilder.appendPatternQuads(connectedQuads.get(side), pattern, faceQuads);
+        CTMPartBuilder.appendPatternQuads((deferredGeometry ? lazyQuads() : connectedQuads).get(side), pattern, faceQuads);
     }
 }

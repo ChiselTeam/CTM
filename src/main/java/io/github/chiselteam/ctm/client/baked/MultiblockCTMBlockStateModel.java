@@ -37,17 +37,15 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
     protected final Map<Direction, BakedQuad[]> multiblock3x3Quads;
     protected final Map<Direction, BakedQuad[]> multiblock4x4Quads;
     private final MultiblockQuadSelector selector;
-    private final Map<Direction, BakedQuad[]> effectiveBaseQuads;
     protected final Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads;
 
     public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces, Set<Direction> unculledFaces, boolean renderOverlayOnAllFaces, Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> multiblock2x2Quads, Map<Direction, BakedQuad[]> multiblock3x3Quads, Map<Direction, BakedQuad[]> multiblock4x4Quads, TextureAtlasSprite particle, CTMVariant variant, CTMBlockPredicate connectionPredicate, List<CTMOverlayRule> overlayRules, Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads, boolean ambientOcclusion) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads), ambientOcclusion);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads), ambientOcclusion);
         this.multiblock2x2Quads = multiblock2x2Quads;
         this.multiblock3x3Quads = multiblock3x3Quads;
         this.multiblock4x4Quads = multiblock4x4Quads;
         this.ruleQuads = ruleQuads;
         this.selector = createSelector(variant.kind());
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     public MultiblockCTMBlockStateModel(Set<Direction> connectedFaces,
@@ -62,13 +60,12 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
                                         CTMBlockPredicate connectionPredicate,
                                         List<CTMOverlayRule> overlayRules,
                                         Map<CTMOverlayRule, Map<Direction, BakedQuad>> ruleQuads) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads));
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant, connectionPredicate, overlayRules, computeTotalFlags(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, ruleQuads));
         this.multiblock2x2Quads = multiblock2x2Quads;
         this.multiblock3x3Quads = multiblock3x3Quads;
         this.multiblock4x4Quads = multiblock4x4Quads;
         this.ruleQuads = ruleQuads;
         this.selector = createSelector(variant.kind());
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     private static int computeTotalFlags(Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> mb2, Map<Direction, BakedQuad[]> mb3, Map<Direction, BakedQuad[]> mb4, Map<CTMOverlayRule, Map<Direction, BakedQuad>> rules) {
@@ -100,13 +97,12 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
                                         Map<Direction, BakedQuad[]> multiblock4x4Quads,
                                         TextureAtlasSprite particle,
                                         CTMVariant variant) {
-        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, baseQuads, particle, variant);
+        super(connectedFaces, unculledFaces, renderOverlayOnAllFaces, renderedBaseQuads(baseQuads, multiblock2x2Quads, multiblock3x3Quads, multiblock4x4Quads, variant, connectedFaces, renderOverlayOnAllFaces), particle, variant, CTMBlockPredicate.sameBlock(), List.of(), computeTotalFlags(baseQuads, Map.of(), Map.of(), Map.of(), Map.of()));
         this.multiblock2x2Quads = multiblock2x2Quads;
         this.multiblock3x3Quads = multiblock3x3Quads;
         this.multiblock4x4Quads = multiblock4x4Quads;
         this.ruleQuads = Map.of();
         this.selector = createSelector(variant.kind());
-        this.effectiveBaseQuads = computeEffectiveBaseQuads();
     }
 
     @Override
@@ -115,7 +111,6 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
         multiblock2x2Quads.values().forEach(visitor);
         multiblock3x3Quads.values().forEach(visitor);
         multiblock4x4Quads.values().forEach(visitor);
-        effectiveBaseQuads.values().forEach(visitor);
     }
 
     @Override
@@ -153,7 +148,7 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
     @Override
     protected ConnectedTextureBlockModelPart createPart(MultiblockCTMKey key, long overlayMask) {
         return CTMPartBuilder.create(
-                effectiveBaseQuads,
+                baseQuads,
                 unculledFaces,
                 particleMaterial,
                 ambientOcclusion,
@@ -183,15 +178,18 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
         }
     }
 
-    private Map<Direction, BakedQuad[]> computeEffectiveBaseQuads() {
+    private static Map<Direction, BakedQuad[]> renderedBaseQuads(
+            Map<Direction, BakedQuad[]> baseQuads, Map<Direction, BakedQuad[]> mb2,
+            Map<Direction, BakedQuad[]> mb3, Map<Direction, BakedQuad[]> mb4,
+            CTMVariant variant, Set<Direction> connectedFaces, boolean renderOverlayOnAllFaces) {
         if (variant.waterOffset()) {
             return baseQuads;
         }
-        Map<Direction, BakedQuad[]> tileQuads = tileQuadsForKind(variant.kind());
+        Map<Direction, BakedQuad[]> tileQuads = tileQuadsForKind(variant.kind(), mb2, mb3, mb4);
         Map<Direction, BakedQuad[]> result = new EnumMap<>(Direction.class);
         for (Map.Entry<Direction, BakedQuad[]> entry : baseQuads.entrySet()) {
             Direction side = entry.getKey();
-            if (shouldRenderMultiblockOverlay(side) && tileQuads.get(side) != null) {
+            if ((variant.kind().usesRandomTexture() || connectedFaces.contains(side) || renderOverlayOnAllFaces) && tileQuads.get(side) != null) {
                 continue;
             }
             result.put(side, entry.getValue());
@@ -199,15 +197,15 @@ public class MultiblockCTMBlockStateModel extends AbstractConnectedTextureBlockS
         return result;
     }
 
-    private Map<Direction, BakedQuad[]> tileQuadsForKind(CTMKind kind) {
+    private static Map<Direction, BakedQuad[]> tileQuadsForKind(CTMKind kind, Map<Direction, BakedQuad[]> mb2, Map<Direction, BakedQuad[]> mb3, Map<Direction, BakedQuad[]> mb4) {
         if (kind.isV4() || kind.isR4() || (kind.usesMultiblockCTM() && kind.multiblockSize() == 2)) {
-            return multiblock2x2Quads;
+            return mb2;
         }
         if (kind.isV9() || kind.isR9() || (kind.usesMultiblockCTM() && kind.multiblockSize() == 3)) {
-            return multiblock3x3Quads;
+            return mb3;
         }
         if (kind.isV16() || kind.isR16() || (kind.usesMultiblockCTM() && kind.multiblockSize() == 4)) {
-            return multiblock4x4Quads;
+            return mb4;
         }
         return Map.of();
     }

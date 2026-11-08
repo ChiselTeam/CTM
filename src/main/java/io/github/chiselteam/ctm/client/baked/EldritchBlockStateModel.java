@@ -1,10 +1,13 @@
 package io.github.chiselteam.ctm.client.baked;
 
+import io.github.chiselteam.ctm.client.AbstractConnectedTextureBlockStateModel;
+import io.github.chiselteam.ctm.impl.model.DeferredCTMModel;
 import io.github.chiselteam.ctm.impl.model.EldritchQuadTransformer;
 import io.github.chiselteam.ctm.impl.model.CTMQuadStorage;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
@@ -28,11 +31,12 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
     private static final int MAX_CACHE_ENTRIES = 4096;
 
     private final BlockStateModel delegate;
+    private final boolean cacheByGeometryKey;
 
-    private final Map<Long, List<BlockStateModelPart>> cache = Collections.synchronizedMap(
+    private final Map<Long, CachedParts> cache = Collections.synchronizedMap(
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<Long, List<BlockStateModelPart>> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<Long, CachedParts> eldest) {
                     return size() > MAX_CACHE_ENTRIES;
                 }
             }
@@ -40,6 +44,10 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
 
     public EldritchBlockStateModel(BlockStateModel delegate) {
         this.delegate = delegate;
+        this.cacheByGeometryKey = delegate.getClass() == SingleVariant.class
+                || delegate.getClass() == DeferredCTMModel.class
+                || (delegate instanceof AbstractConnectedTextureBlockStateModel<?>
+                && delegate.getClass().getPackageName().equals(EldritchBlockStateModel.class.getPackageName()));
     }
 
     @Override
@@ -48,40 +56,38 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
     }
 
     @Override
-    public @NonNull Object createGeometryKey(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random) {
-        Object delegateKey = computeDelegateGeometryKey(level, pos, state, random);
-        return new EldritchGeometryKey(pos.asLong(), delegateKey);
+    public @Nullable Object createGeometryKey(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random) {
+        var delegateKey = computeDelegateGeometryKey(level, pos, state, random);
+        return delegateKey == null ? null : new EldritchGeometryKey(pos.asLong(), delegateKey);
     }
 
     private Object computeDelegateGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
-        if (delegate instanceof DynamicBlockStateModel dyn) {
-            return dyn.createGeometryKey(level, pos, state, random);
-        }
-        return delegate;
+        return delegate.createGeometryKey(level, pos, state, random);
     }
 
     @Override
     public void collectParts(@NonNull BlockAndTintGetter level, @NonNull BlockPos pos, @NonNull BlockState state, @NonNull RandomSource random, @NonNull List<BlockStateModelPart> parts) {
-        List<BlockStateModelPart> cached = cache.get(pos.asLong());
-        if (cached != null) {
-            parts.addAll(cached);
+        var delegateKey = cacheByGeometryKey ? computeDelegateGeometryKey(level, pos, state, random) : null;
+        long position = pos.asLong();
+        var cached = delegateKey == null ? null : cache.get(position);
+
+        if (cached != null && cached.delegateKey().equals(delegateKey)) {
+            parts.addAll(cached.parts());
             return;
         }
-
         List<BlockStateModelPart> delegateParts = new ArrayList<>();
-        if (delegate instanceof DynamicBlockStateModel dyn) {
-            dyn.collectParts(level, pos, state, random, delegateParts);
-        } else {
-            delegate.collectParts(random, delegateParts);
-        }
-
+        delegate.collectParts(level, pos, state, random, delegateParts);
         List<BlockStateModelPart> transformed = new ArrayList<>(delegateParts.size());
         for (BlockStateModelPart part : delegateParts) {
             transformed.add(transformPart(part, pos));
         }
 
         List<BlockStateModelPart> immutable = List.copyOf(transformed);
-        cache.put(pos.asLong(), immutable);
+        if (delegateKey != null) {
+            synchronized (cache) {
+                if (cache.get(position) == cached) cache.put(position, new CachedParts(delegateKey, immutable));
+            }
+        }
         parts.addAll(immutable);
     }
 
@@ -121,12 +127,7 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
         return new TransformedPart(newSided, newUnculled, part);
     }
 
-    private record TransformedPart(
-            Map<Direction, List<BakedQuad>> sidedQuads,
-            List<BakedQuad> unculledQuads,
-            BlockStateModelPart source
-    ) implements BlockStateModelPart {
-
+    private record TransformedPart(Map<Direction, List<BakedQuad>> sidedQuads, List<BakedQuad> unculledQuads, BlockStateModelPart source) implements BlockStateModelPart {
         @Override
         public @NonNull List<BakedQuad> getQuads(@Nullable Direction side) {
             return side == null ? unculledQuads : sidedQuads.get(side);
@@ -148,5 +149,6 @@ public class EldritchBlockStateModel implements DynamicBlockStateModel, CTMQuadS
         }
     }
 
+    private record CachedParts(Object delegateKey, List<BlockStateModelPart> parts) {}
     private record EldritchGeometryKey(long pos, Object delegateKey) {}
 }

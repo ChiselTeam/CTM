@@ -1,5 +1,24 @@
 # Changelog
 
+## [26.1.2.14]
+
+### Added
+- Added the `CTMBlockOffsets` API for per-block texture offsets and propagation through
+  face-connected blocks of the same type across loaded chunks.
+- Added per-dimension offset persistence across world reloads, with client synchronization
+  for tracking players and players entering affected chunks.
+
+### Changed
+- Deferred eligible CTM model and Standard CTM geometry baking until needed to reduce
+  upfront model baking work and memory use.
+- Added bake-result caching and shared identical quads within a model bake to reduce
+  duplicate allocations, including layered and Eldritch models.
+- Enabled lazy model and Standard geometry baking automatically for eligible models.
+
+### Fixed
+- Updated Eldritch geometry caching to account for changes in the underlying connected
+  texture geometry instead of reusing parts solely by block position.
+
 ## [26.1.2.9]
 
 ### Added
