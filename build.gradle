@@ -102,7 +102,7 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 
     mainFile.changelog = file('CHANGELOG.md')
     mainFile.addModLoader("neoforge")
-    mainFile.addGameVersion("Client", "Server")
+    mainFile.addGameVersion(minecraft_version, "Client", "Server")
     mainFile.releaseType = release_type
 }
 
@@ -112,8 +112,9 @@ modrinth {
     versionName = "${mod_name}-${mod_version}"
     versionNumber = mod_version
     versionType = release_type
+    changelog = file('CHANGELOG.md').text
     uploadFile = jar
-    gameVersions = ["26.1.2"]
+    gameVersions = [minecraft_version]
     loaders = ["neoforge"]
 }
 
